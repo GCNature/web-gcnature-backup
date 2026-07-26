@@ -1,0 +1,46 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+server/.env
+server/.env.*
+
+# Large/local assets and temporary maintenance scripts
+Product-20260407T075101Z-3-001/
+*.rar
+check.cjs
+fix.cjs
+fix2.cjs
+replace.cjs
+replace.js
+fetch_fpt.js
+import-products.cjs
+import-products.js
+vite.config.ts.timestamp-*.mjs
+web-mercy/
+
+# Scratch and nested backup folders
+scratch/
+Web - GCnature/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,380 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model cart {
+  id               Int               @id @default(autoincrement())
+  session_id       String            @db.VarChar(128)
+  user_id          Int?
+  product_id       String            @db.VarChar(150)
+  variant_name     String?           @db.VarChar(100)
+  warranty_id      Int?
+  quantity         Int               @default(1)
+  created_at       DateTime          @default(now()) @db.Timestamp(0)
+  updated_at       DateTime          @default(now()) @db.Timestamp(0)
+  users            users?            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "cart_ibfk_1")
+  warranty_options warranty_options? @relation(fields: [warranty_id], references: [id], onUpdate: Restrict, map: "cart_ibfk_2")
+
+  @@index([session_id], map: "idx_session")
+  @@index([user_id], map: "idx_user")
+  @@index([warranty_id], map: "warranty_id")
+}
+
+model categories {
+  id               Int          @id @default(autoincrement())
+  name             String       @db.VarChar(100)
+  slug             String       @unique(map: "slug") @db.VarChar(100)
+  icon             String?      @db.VarChar(50)
+  parent_id        Int?
+  sort_order       Int?         @default(0)
+  is_active        Boolean?     @default(true)
+  created_at       DateTime     @default(now()) @db.Timestamp(0)
+  categories       categories?  @relation("categoriesTocategories", fields: [parent_id], references: [id], onUpdate: Restrict, map: "categories_ibfk_1")
+  other_categories categories[] @relation("categoriesTocategories")
+  products         products[]
+
+  @@index([slug], map: "idx_slug")
+  @@index([parent_id], map: "parent_id")
+}
+
+model order_items {
+  id             Int     @id @default(autoincrement())
+  order_id       Int
+  product_id     String  @db.VarChar(150)
+  product_name   String  @db.VarChar(500)
+  variant_name   String? @db.VarChar(100)
+  warranty_name  String? @db.VarChar(50)
+  warranty_fee   BigInt? @default(0)
+  price          BigInt
+  original_price BigInt  @default(0)
+  quantity       Int     @default(1)
+  image_url      String? @db.VarChar(500)
+  orders         orders  @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "order_items_ibfk_1")
+
+  @@index([order_id], map: "idx_order")
+}
+
+model orders {
+  id               Int                    @id @default(autoincrement())
+  order_code       String                 @unique(map: "order_code") @db.VarChar(20)
+  user_id          Int?
+  customer_name    String                 @db.VarChar(100)
+  customer_phone   String                 @db.VarChar(20)
+  customer_email   String?                @db.VarChar(100)
+  shipping_address String                 @db.Text
+  subtotal         BigInt                 @default(0)
+  discount_amount  BigInt                 @default(0)
+  shipping_fee     BigInt                 @default(0)
+  total            BigInt                 @default(0)
+  payment_method   orders_payment_method? @default(cod)
+  status           orders_status?         @default(pending)
+  notes            String?                @db.Text
+  created_at       DateTime               @default(now()) @db.Timestamp(0)
+  updated_at       DateTime               @default(now()) @db.Timestamp(0)
+  ip_address       String?                @db.VarChar(50)
+  payment_amount   BigInt?                @default(0)
+  payment_ref      String?                @db.VarChar(255)
+  payment_status   String?                @default("pending") @db.VarChar(20)
+  voucher_code     String?                @db.VarChar(50)
+  voucher_discount BigInt?                @default(0)
+  order_items      order_items[]
+  users            users?                 @relation(fields: [user_id], references: [id], onUpdate: Restrict, map: "orders_ibfk_1")
+
+  @@index([order_code], map: "idx_order_code")
+  @@index([status], map: "idx_status")
+  @@index([user_id], map: "idx_user")
+}
+
+model product_images {
+  id         Int    @id @default(autoincrement())
+  product_id String @db.VarChar(150)
+  image_url  String @db.VarChar(500)
+  sort_order Int?   @default(0)
+
+  @@index([product_id], map: "idx_product")
+}
+
+model product_specs {
+  id         Int    @id @default(autoincrement())
+  product_id String @db.VarChar(150)
+  spec_name  String @db.VarChar(100)
+  spec_value String @db.Text
+  sort_order Int?   @default(0)
+
+  @@index([product_id], map: "idx_product")
+}
+
+model product_variants {
+  id           Int      @id @default(autoincrement())
+  product_id   String   @db.VarChar(150)
+  variant_name String   @db.VarChar(100)
+  is_active    Boolean? @default(true)
+
+  @@index([product_id], map: "idx_product")
+}
+
+model products {
+  id                 Int         @id @default(autoincrement())
+  product_id         String      @unique(map: "product_id") @db.VarChar(150)
+  sku                String?     @db.VarChar(50)
+  name               String      @db.VarChar(500)
+  short_name         String?     @db.VarChar(200)
+  category_id        Int?
+  category_name      String?     @db.VarChar(100)
+  price              BigInt      @default(0)
+  original_price     BigInt      @default(0)
+  discount           Int?        @default(0)
+  badge              String?     @db.VarChar(50)
+  rating             Decimal?    @default(0.0) @db.Decimal(2, 1)
+  sold               Int?        @default(0)
+  stock              Int?        @default(0)
+  brand              String?     @default("Mercy Tech Global") @db.VarChar(100)
+  description        String?     @db.LongText
+  seo_tags           String?     @db.Text
+  shopee_url         String?     @db.VarChar(500)
+  tiktok_url         String?     @db.VarChar(500)
+  is_flash_sale      Boolean?    @default(false)
+  flash_sale_percent Int?        @default(0)
+  is_active          Boolean?    @default(true)
+  created_at         DateTime    @default(now()) @db.Timestamp(0)
+  updated_at         DateTime    @default(now()) @db.Timestamp(0)
+  features_vn        String?     @db.LongText
+  features_en        String?     @db.LongText
+  footer_info        String?     @db.Text
+  production_year    Int?
+  clearance_price    BigInt?     @default(0)
+  daily_sale_price   BigInt?     @default(0)
+  campaign_price     BigInt?     @default(0)
+  off_platform_price BigInt?     @default(0)
+  warranty_data      String?     @db.Text
+  youtube_url        String?     @db.VarChar(500)
+  origin             String?     @db.VarChar(100)
+  volume             String?     @db.VarChar(100)
+  ingredients        String?     @db.LongText
+  categories         categories? @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "products_ibfk_1")
+
+  @@index([category_id], map: "idx_category")
+  @@index([is_flash_sale], map: "idx_flash_sale")
+  @@index([price], map: "idx_price")
+  @@index([product_id], map: "idx_product_id")
+}
+
+model users {
+  id                 Int             @id @default(autoincrement())
+  username           String          @unique(map: "username") @db.VarChar(50)
+  email              String          @unique(map: "email") @db.VarChar(100)
+  password_hash      String          @db.VarChar(255)
+  full_name          String?         @default("") @db.VarChar(100)
+  phone              String?         @default("") @db.VarChar(20)
+  address            String?         @db.Text
+  avatar             String?         @db.VarChar(255)
+  role               users_role?     @default(customer)
+  is_active          Boolean?        @default(true)
+  created_at         DateTime        @default(now()) @db.Timestamp(0)
+  updated_at         DateTime        @default(now()) @db.Timestamp(0)
+  last_login_at      DateTime?       @db.Timestamp(0)
+  register_ip        String?         @db.VarChar(50)
+  user_agent         String?         @db.VarChar(500)
+  lucky_spins_count  Int             @default(1)
+  cart               cart[]
+  orders             orders[]
+  user_vouchers      user_vouchers[]
+  user_rewards       user_rewards[]
+
+  @@index([email], map: "idx_email")
+  @@index([username], map: "idx_username")
+}
+
+model warranty_options {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(50)
+  price      BigInt   @default(0)
+  sort_order Int?     @default(0)
+  is_active  Boolean? @default(true)
+  cart       cart[]
+}
+
+model product_reviews {
+  id            Int       @id @default(autoincrement())
+  product_id    String    @db.VarChar(150)
+  reviewer_name String    @db.VarChar(100)
+  avatar_letter String?   @default("") @db.VarChar(5)
+  avatar_color  String?   @default("bg-red-500") @db.VarChar(30)
+  rating        Int       @default(5) @db.TinyInt
+  review_date   String    @db.VarChar(20)
+  is_verified   Boolean?  @default(false)
+  review_text   String    @db.Text
+  helpful_count Int?      @default(0)
+  image_url     String?   @default("") @db.VarChar(255)
+  is_active     Boolean?  @default(true)
+  sort_order    Int?      @default(0)
+  created_at    DateTime? @default(now()) @db.DateTime(0)
+
+  @@index([product_id], map: "idx_product_id")
+}
+
+model settings {
+  id         Int      @id @default(autoincrement())
+  key        String   @unique @db.VarChar(100)
+  value      String?  @db.Text
+  updated_at DateTime @default(now()) @db.Timestamp(0)
+
+  @@index([key], map: "idx_key")
+}
+
+model payment_methods {
+  id             Int      @id @default(autoincrement())
+  bank_code      String   @db.VarChar(20)
+  bank_name      String?  @db.VarChar(100)
+  account_number String   @db.VarChar(50)
+  account_name   String   @db.VarChar(100)
+  is_active      Boolean  @default(true)
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  updated_at     DateTime @default(now()) @db.Timestamp(0)
+}
+
+model contact_requests {
+  id         Int      @id @default(autoincrement())
+  name       String   @db.VarChar(100)
+  phone      String   @db.VarChar(20)
+  email      String   @db.VarChar(100)
+  message    String   @db.Text
+  status     String   @default("pending") @db.VarChar(20)
+  notes      String?  @db.Text
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model flash_sale_campaigns {
+  id          Int                   @id @default(autoincrement())
+  name        String                @db.VarChar(200)
+  description String?               @db.Text
+  start_at    DateTime              @db.DateTime(0)
+  end_at      DateTime              @db.DateTime(0)
+  is_active       Boolean               @default(true)
+  is_repeat_daily Boolean               @default(false)
+  sort_order      Int                   @default(0)
+  banner_url      String?               @db.VarChar(500)
+  created_at      DateTime              @default(now()) @db.Timestamp(0)
+  updated_at      DateTime              @default(now()) @db.Timestamp(0)
+  products        flash_sale_products[]
+
+  @@index([is_active], map: "idx_active")
+  @@index([start_at], map: "idx_start")
+  @@index([end_at], map: "idx_end")
+}
+
+model flash_sale_products {
+  id               Int                  @id @default(autoincrement())
+  campaign_id      Int
+  product_id       String               @db.VarChar(150)
+  sale_price       BigInt               @default(0)
+  discount_percent Int                  @default(0)
+  stock_limit      Int                  @default(0)
+  sold_count       Int                  @default(0)
+  sort_order       Int                  @default(0)
+  created_at       DateTime             @default(now()) @db.Timestamp(0)
+  campaign         flash_sale_campaigns @relation(fields: [campaign_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fs_campaign_fk")
+
+  @@unique([campaign_id, product_id], map: "unique_campaign_product")
+  @@index([campaign_id], map: "idx_campaign")
+  @@index([product_id], map: "idx_product")
+}
+
+model articles {
+  id           Int      @id @default(autoincrement())
+  slug         String   @unique(map: "uniq_slug") @db.VarChar(160)
+  title        String   @db.VarChar(255)
+  excerpt      String?  @db.Text
+  content      String?  @db.MediumText
+  image        String?  @db.VarChar(500)
+  date         String?  @db.VarChar(20)
+  category     String?  @default("Tin Tức") @db.VarChar(80)
+  author       String?  @default("Mercy") @db.VarChar(120)
+  views        Int      @default(0)
+  is_published Boolean  @default(true)
+  created_at   DateTime @default(now()) @db.Timestamp(0)
+  updated_at   DateTime @default(now()) @db.Timestamp(0)
+
+  @@index([created_at], map: "idx_created")
+  @@index([is_published], map: "idx_published")
+}
+
+enum users_role {
+  customer
+  admin
+  editor
+  shop_manager
+}
+
+enum orders_payment_method {
+  cod
+  bank_transfer
+  ewallet
+}
+
+enum orders_status {
+  pending
+  confirmed
+  shipping
+  delivered
+  cancelled
+}
+
+model vouchers {
+  id              Int             @id @default(autoincrement())
+  code            String          @unique @db.VarChar(50)
+  name            String          @db.VarChar(100)
+  discount_amount BigInt          @default(0)
+  min_order_value BigInt          @default(0)
+  expires_at      DateTime?       @db.Timestamp(0)
+  is_active       Boolean         @default(true)
+  created_at      DateTime        @default(now()) @db.Timestamp(0)
+  updated_at      DateTime        @default(now()) @db.Timestamp(0)
+  user_vouchers   user_vouchers[]
+
+  @@index([code], map: "idx_voucher_code")
+  @@index([is_active], map: "idx_voucher_active")
+}
+
+model user_vouchers {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  voucher_id  Int
+  is_used     Boolean   @default(false)
+  used_at     DateTime? @db.Timestamp(0)
+  order_id    Int?
+  assigned_at DateTime  @default(now()) @db.Timestamp(0)
+  users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  vouchers    vouchers  @relation(fields: [voucher_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, voucher_id])
+  @@index([user_id], map: "idx_uv_user")
+  @@index([voucher_id], map: "idx_uv_voucher")
+}
+
+model notifications {
+  id         Int      @id @default(autoincrement())
+  type       String   @db.VarChar(50)
+  title      String   @db.VarChar(255)
+  content    String   @db.Text
+  is_read    Boolean  @default(false)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+}
+
+model user_rewards {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  reward_name String   @db.VarChar(255)
+  reward_type String   @db.VarChar(50) // 'voucher', 'spa', 'physical', 'other'
+  code        String?  @db.VarChar(100) // If voucher, the voucher code
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  users       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], map: "idx_ur_user")
+}

@@ -1,0 +1,352 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 14% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 14% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 14% 14%;
+    --primary: 188 56% 59%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 14% 14%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 14% 14%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 188 56% 59%;
+    --radius: 0.75rem;
+
+    /* Clean brand palette — no gradients */
+    --gc-teal: 188 56% 59%;
+    --gc-dark: 220 20% 14%;
+    --gc-gray: 220 9% 46%;
+    --gc-light: 220 14% 97%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 188 56% 59%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  ::selection {
+    background: hsl(var(--primary) / 0.12);
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  /* ═══ Header — clean, flat, solid ═══ */
+  .fpt-header-gradient {
+    background: #5dc1d1 url('/header-bg.png') no-repeat center top;
+    background-size: cover;
+  }
+  .fpt-header-dark {
+    background: #5dc1d1;
+  }
+
+  /* ═══ Clean hover effects ═══ */
+  .card-lift {
+    @apply transition-all duration-200 ease-out;
+  }
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  .gc-card-hover {
+    @apply transition-all duration-200 ease-out;
+  }
+  .gc-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  /* ═══ Flash sale banner — solid red, no gradient ═══ */
+  .flash-sale-gradient {
+    background: #5dc1d1;
+  }
+  .deal-banner-gradient {
+    background: #5dc1d1;
+  }
+
+  /* ═══ Progress bar — clean flat style ═══ */
+  .sale-progress-bar {
+    @apply relative h-[18px] rounded-full overflow-hidden;
+    background: #eefbfc;
+  }
+  .sale-progress-fill {
+    @apply absolute inset-y-0 left-0 rounded-full;
+    background: #5dc1d1;
+  }
+  .sale-progress-text {
+    @apply absolute inset-0 flex items-center justify-center text-[10px] font-bold z-10;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  /* ═══ Underline animation — subtle ═══ */
+  .underline-animate {
+    @apply relative;
+  }
+  .underline-animate::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary origin-right transition-transform duration-200;
+    transform: scaleX(0);
+  }
+  .underline-animate:hover::after {
+    transform: scaleX(1);
+    @apply origin-left;
+  }
+
+  /* ═══ Text clamp utilities ═══ */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ═══ Loading skeleton — clean shimmer ═══ */
+  .shimmer-bg {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 25%,
+      hsl(var(--border)) 50%,
+      hsl(var(--muted)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s linear infinite;
+  }
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar — subtle */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--foreground) / 0.15);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground) / 0.25);
+}
+
+/* Focus visible ring */
+*:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ═══ Footer — clean solid dark ═══ */
+.nemark-navy-gradient {
+  background: #1a1a2e;
+}
+
+/* ═══ Contact button pulse — subtle ═══ */
+@keyframes float-pulse-red {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(93, 193, 209, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(93, 193, 209, 0); }
+}
+.float-pulse-red, .float-pulse-teal {
+  animation: float-pulse-red 2s ease-in-out infinite;
+}
+
+@keyframes float-pulse-blue {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.34); }
+  50% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+}
+.float-pulse-blue {
+  animation: float-pulse-blue 2.2s ease-in-out infinite;
+}
+
+/* Shimmer animation */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Lightning strike effect */
+@keyframes zap-flash {
+  0%, 100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+  10%, 30% { transform: scale(1.2) rotate(5deg); filter: brightness(1.5) drop-shadow(0 0 4px rgba(251,191,36,0.6)); }
+  20% { transform: scale(0.9) rotate(-5deg); filter: brightness(0.8); }
+}
+.animate-zap {
+  animation: zap-flash 1.2s ease-in-out infinite;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Google Translate Widget Overrides */
+body { top: 0 !important; }
+.skiptranslate iframe, .goog-te-banner-frame.skiptranslate, #goog-gt-tt { display: none !important; }
+.goog-text-highlight { background-color: transparent !important; box-shadow: none !important; }
+
+/* Mobile safe-area helpers */
+.mobile-safe-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+}
+
+/* Premium mobile shadow utility */
+.mobile-soft-shadow {
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.16);
+}
+
+/* Hero Section Background - mobile: vertical bg image / desktop: inline bg image */
+@media (max-width: 767px) {
+  .hero-bg-mobile {
+    background-image: url('/banner2/bgimg-mobile.png') !important;
+    background-size: cover !important;
+    background-position: top center !important;
+    background-repeat: no-repeat !important;
+  }
+}
+
+/* Hide scrollbar for horizontal scroll */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ═══ Livestream banner animations ═══ */
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* ═══ Global brand override: map old red tokens to brand teal ═══ */
+.border-red-600, .border-red-500, .border-red-400 {
+  border-color: #5dc1d1 !important;
+}
+.hover\:border-red-300:hover, .hover\:border-red-200:hover, .hover\:border-red-400:hover, .hover\:border-red-500:hover {
+  border-color: #bcecf2 !important;
+}
+.text-red-600, .text-red-500, .text-rose-600 {
+  color: #5dc1d1 !important;
+}
+.hover\:text-red-600:hover, .hover\:text-red-500:hover, .hover\:text-red-700:hover, .group-hover\:text-red-600:hover, .group-hover\:text-red-500:hover {
+  color: #5dc1d1 !important;
+}
+.bg-red-600, .bg-red-500 {
+  background-color: #5dc1d1 !important;
+}
+.hover\:bg-red-700:hover, .hover\:bg-red-600:hover {
+  background-color: #4bb4c4 !important;
+}
+.bg-red-50, .bg-rose-50 {
+  background-color: #eefbfc !important;
+}
+.hover\:bg-red-50:hover, .hover\:bg-rose-50:hover {
+  background-color: #eefbfc !important;
+}
+.focus\:ring-red-100:focus {
+  --tw-ring-color: rgba(93, 193, 209, 0.2) !important;
+}
+.focus\:border-red-400:focus {
+  border-color: #5dc1d1 !important;
+}
+
+/* ═══ Pulse wave animation for Coop (Hợp tác) Button ═══ */
+@keyframes pulse-wave {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1.25);
+    opacity: 0;
+  }
+}
+.pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  animation: pulse-wave 2s infinite ease-out;
+  pointer-events: none;
+}
+
+/* ═══ Infinite Certificates Marquee ═══ */
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 40s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}

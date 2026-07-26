@@ -1,0 +1,45 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "predev": "npx prisma generate && node -e \"const major=Number(process.versions.node.split('.')[0]);if(major<18){console.error('Backend requires Node.js >= 18.18.0. Current: '+process.version);process.exit(1)}\"",
+    "dev": "tsx watch src/index.ts",
+    "prestart": "npx prisma generate && node -e \"const major=Number(process.versions.node.split('.')[0]);if(major<18){console.error('Backend requires Node.js >= 18.18.0. Current: '+process.version);process.exit(1)}\"",
+    "start": "tsx src/index.ts",
+    "postinstall": "npx prisma generate",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18.18.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.4.1",
+    "axios": "^1.14.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.5.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "mysql2": "^3.20.0",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.7"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^8.0.0",
+    "prisma": "^6.4.1",
+    "tsx": "^4.21.0"
+  }
+}
