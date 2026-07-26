@@ -58,8 +58,15 @@ export default function AdminProducts() {
       setProducts(data);
       setUseApi(true);
     } catch (err: any) {
-      toast.error(err.message || "Không thể tải danh sách sản phẩm");
-      setProducts([]);
+      try {
+        const fallbackData = await apiGet<Product[]>("/products?_t=" + Date.now());
+        setProducts(fallbackData);
+        setUseApi(true);
+      } catch (fallbackErr: any) {
+        console.error("Load products error:", fallbackErr);
+        toast.error("Không thể kết nối danh sách sản phẩm");
+        setProducts([]);
+      }
     } finally {
       setLoading(false);
     }

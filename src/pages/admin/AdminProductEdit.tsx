@@ -152,21 +152,67 @@ export default function AdminProductEdit() {
         setSeoDesc("");
         setSeoKeywords("");
       } else {
-        const data = await apiGet<ProductDetail>(`/admin/products/${id}?_t=${Date.now()}`);
-        setProduct(data);
-        let parsedSeo = { title: "", desc: "", keywords: "" };
         try {
+          const data = await apiGet<ProductDetail>(`/admin/products/${id}?_t=${Date.now()}`);
+          setProduct(data);
           if (data.seoTags && data.seoTags.trim().startsWith("{")) {
-            parsedSeo = JSON.parse(data.seoTags);
-          } else {
-            parsedSeo.keywords = data.seoTags || "";
+            const parsedSeo = JSON.parse(data.seoTags);
+            setSeoTitle(parsedSeo.title || "");
+            setSeoDesc(parsedSeo.desc || "");
+            setSeoKeywords(parsedSeo.keywords || "");
           }
-        } catch {
-          parsedSeo.keywords = data.seoTags || "";
+        } catch (err: any) {
+          try {
+            const fb = await apiGet<any>(`/products/${id}?_t=${Date.now()}`);
+            if (fb) {
+              const formattedImages = Array.isArray(fb.images)
+                ? fb.images.map((imgUrl: string, idx: number) => ({ id: idx + 1, url: imgUrl, sortOrder: idx }))
+                : (fb.image ? [{ id: 1, url: fb.image, sortOrder: 0 }] : []);
+              
+              setProduct({
+                id: fb.id || Number(id),
+                productId: fb.productId || fb.sku || "",
+                sku: fb.sku || "",
+                name: fb.name || "",
+                shortName: fb.shortName || "",
+                categoryId: fb.categoryId || null,
+                categoryName: fb.categoryName || fb.category || "",
+                price: fb.price || 0,
+                originalPrice: fb.originalPrice || 0,
+                discount: fb.discount || 0,
+                badge: fb.badge || "",
+                rating: fb.rating || 5,
+                sold: fb.sold || 0,
+                stock: fb.stock || 0,
+                brand: fb.brand || "GC Nature",
+                description: fb.description || "",
+                seoTags: fb.seoTags || "",
+                shopeeUrl: fb.shopeeUrl || "",
+                tiktokUrl: fb.tiktokUrl || "",
+                youtubeUrl: fb.youtubeUrl || "",
+                isFlashSale: fb.isFlashSale || false,
+                flashSalePercent: fb.flashSalePercent || 0,
+                isActive: fb.isActive ?? true,
+                featuresVn: typeof fb.featuresVn === "string" ? fb.featuresVn : JSON.stringify(fb.featuresVn || []),
+                featuresEn: fb.featuresEn || "",
+                footerInfo: fb.footerInfo || "",
+                productionYear: fb.productionYear || new Date().getFullYear(),
+                clearancePrice: fb.clearancePrice || 0,
+                dailySalePrice: fb.dailySalePrice || 0,
+                campaignPrice: fb.campaignPrice || 0,
+                offPlatformPrice: fb.offPlatformPrice || 0,
+                warrantyData: fb.warrantyData || "",
+                images: formattedImages,
+                specs: fb.specs || [],
+                variants: fb.variants || [],
+                reviews: fb.reviews || []
+              });
+            }
+          } catch (fbErr: any) {
+            toast.error(err.message || "Không thể tải sản phẩm");
+            navigate("/admin/products");
+          }
         }
-        setSeoTitle(parsedSeo.title || "");
-        setSeoDesc(parsedSeo.desc || "");
-        setSeoKeywords(parsedSeo.keywords || "");
       }
     } catch (err: any) {
       toast.error(err.message || "Không thể tải sản phẩm");

@@ -17,7 +17,8 @@ function authHeaders(): Record<string, string> {
 export async function apiGet<T = any>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, { headers: authHeaders() });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: "Lỗi server" }));
+    if (res.status === 401) throw new Error("Phiên làm việc đã hết hạn");
+    const err = await res.json().catch(() => ({ message: "Lỗi kết nối máy chủ" }));
     throw new Error(err.message || `HTTP ${res.status}`);
   }
   return res.json();
@@ -30,7 +31,8 @@ export async function apiPost<T = any>(path: string, body?: any): Promise<T> {
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: "Lỗi server" }));
+    if (res.status === 401) throw new Error("Phiên làm việc đã hết hạn");
+    const err = await res.json().catch(() => ({ message: "Lỗi kết nối máy chủ" }));
     throw new Error(err.message || `HTTP ${res.status}`);
   }
   return res.json();
@@ -43,7 +45,8 @@ export async function apiPut<T = any>(path: string, body?: any): Promise<T> {
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: "Lỗi server" }));
+    if (res.status === 401) throw new Error("Phiên làm việc đã hết hạn");
+    const err = await res.json().catch(() => ({ message: "Lỗi kết nối máy chủ" }));
     throw new Error(err.message || `HTTP ${res.status}`);
   }
   return res.json();
@@ -56,7 +59,8 @@ export async function apiPatch<T = any>(path: string, body?: any): Promise<T> {
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: "Lỗi server" }));
+    if (res.status === 401) throw new Error("Phiên làm việc đã hết hạn");
+    const err = await res.json().catch(() => ({ message: "Lỗi kết nối máy chủ" }));
     throw new Error(err.message || `HTTP ${res.status}`);
   }
   return res.json();
@@ -68,7 +72,8 @@ export async function apiDelete<T = any>(path: string): Promise<T> {
     headers: authHeaders(),
   });
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: "Lỗi server" }));
+    if (res.status === 401) throw new Error("Phiên làm việc đã hết hạn");
+    const err = await res.json().catch(() => ({ message: "Lỗi kết nối máy chủ" }));
     throw new Error(err.message || `HTTP ${res.status}`);
   }
   return res.json();
