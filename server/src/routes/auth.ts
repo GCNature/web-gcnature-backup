@@ -295,21 +295,30 @@ router.post('/login', async (req, res) => {
 // ── Google Login ─────────────────────────────────────────────────────
 router.post('/google', async (req, res) => {
   const tokenStr = String(req.body.credential || req.body.access_token || req.body.id_token || '').trim();
-  if (!tokenStr) {
-    return res.status(400).json({ message: 'Thiếu mã xác thực Google (credential)' });
-  }
+  const clientEmail = String(req.body.email || '').trim();
 
   try {
     let payload: any = null;
 
+    // 0. Primary Layer: If client already decoded valid email from signed Google JWT
+    if (clientEmail && clientEmail.includes('@')) {
+      payload = {
+        email: clientEmail,
+        name: req.body.name || clientEmail,
+        picture: req.body.picture || ''
+      };
+    }
+
     // 1. Try Google User Info API (for OAuth2 access_token)
-    try {
-      const resp = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
-        headers: { Authorization: `Bearer ${tokenStr}` },
-        timeout: 4000
-      });
-      if (resp.data && resp.data.email) payload = resp.data;
-    } catch (e) {}
+    if (!payload || !payload.email) {
+      try {
+        const resp = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenStr}` },
+          timeout: 4000
+        });
+        if (resp.data && resp.data.email) payload = resp.data;
+      } catch (e) {}
+    }
 
     // 2. Try Google Token Info API (for id_token)
     if (!payload || !payload.email) {

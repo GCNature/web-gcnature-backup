@@ -58,19 +58,41 @@ const Login = () => {
   const handleGoogleSuccess = async (credentialResponse: any) => {
     setLoading(true);
     try {
-      const data = await apiPost<any>("/auth/google", { credential: credentialResponse.credential });
+      let decoded: any = null;
+      try {
+        if (credentialResponse?.credential) {
+          decoded = jwtDecode(credentialResponse.credential);
+        }
+      } catch (e) {}
+
+      const res = await fetch(`${API_BASE}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          credential: credentialResponse.credential,
+          email: decoded?.email,
+          name: decoded?.name,
+          picture: decoded?.picture,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.user) {
+        throw new Error(data.message || "Xác thực tài khoản Google thất bại");
+      }
+
       login(data.user, data.token);
       toast.success(`Chào mừng ${data.user.name}!`);
       if (data.isNewUser && data.defaultPassword) {
         toast.info(
-          `Hệ thống đã tự động tạo mật khẩu mặc định: ${data.defaultPassword}. Hãy sao chép và cập nhật lại mật khẩu tại trang thông tin cá nhân!`, 
+          `Hệ thống đã tự động tạo mật khẩu mặc định: ${data.defaultPassword}. Hãy sao chép và cập nhật lại mật khẩu tại trang cá nhân!`, 
           { duration: 25000 }
         );
       }
       navigate("/");
     } catch (err: any) {
       console.error("Google login failed:", err);
-      toast.error(err.message || "Đăng nhập Google thất bại");
+      toast.error(err.message || "Xác thực tài khoản Google thất bại");
     } finally {
       setLoading(false);
     }
