@@ -566,10 +566,7 @@ const Recruitment = () => {
                         </div>
 
                         <h2 
-                          onClick={() => {
-                            if (job.jdFileUrl) window.open(job.jdFileUrl, '_blank');
-                            else setActiveJdModalJob(job);
-                          }}
+                          onClick={() => setExpandedJobId(isExpanded ? null : jobIdStr)}
                           className="text-lg md:text-xl font-extrabold text-slate-900 hover:text-teal-700 transition-colors cursor-pointer"
                         >
                           {job.title}
@@ -583,24 +580,24 @@ const Recruitment = () => {
 
                       <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
-                          onClick={() => setActiveJdModalJob(job)}
-                          className="px-4 py-2 border border-slate-200 hover:border-teal-500 bg-white text-slate-800 hover:text-teal-700 rounded-xl text-xs font-bold transition-all h-10 flex items-center gap-1.5 shadow-2xs"
+                          onClick={() => setExpandedJobId(isExpanded ? null : jobIdStr)}
+                          className={`px-4 py-2 border rounded-xl text-xs font-bold transition-all h-10 flex items-center gap-1.5 shadow-2xs ${
+                            isExpanded
+                              ? "bg-teal-600 text-white border-teal-600 hover:bg-teal-700"
+                              : "bg-white text-slate-800 hover:text-teal-700 border-slate-200 hover:border-teal-500"
+                          }`}
                         >
-                          <Eye className="w-3.5 h-3.5 text-teal-600" /> Xem nhanh
+                          <Eye className="w-3.5 h-3.5" /> {isExpanded ? "Thu gọn JD" : "Xem nhanh"}
                         </button>
 
-                        <button
-                          onClick={() => {
-                            if (job.jdFileUrl) {
-                              window.open(job.jdFileUrl, '_blank');
-                            } else {
-                              setActiveJdModalJob(job);
-                            }
-                          }}
-                          className="px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 rounded-xl text-xs font-bold transition-all h-10 flex items-center gap-1.5 shadow-2xs"
-                        >
-                          <FileText className="w-3.5 h-3.5 text-teal-600" /> Xem JD
-                        </button>
+                        {job.jdFileUrl && (
+                          <button
+                            onClick={() => window.open(job.jdFileUrl, '_blank')}
+                            className="px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 rounded-xl text-xs font-bold transition-all h-10 flex items-center gap-1.5 shadow-2xs"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-teal-600" /> Xem JD
+                          </button>
+                        )}
 
                         <button
                           onClick={() => handleApplyClick(job.title)}
