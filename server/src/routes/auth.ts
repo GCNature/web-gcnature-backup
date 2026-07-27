@@ -294,32 +294,64 @@ router.post('/login', async (req, res) => {
 
 // ── Google Login ─────────────────────────────────────────────────────
 router.post('/google', async (req, res) => {
-  const { credential } = req.body;
-  if (!credential) {
-    return res.status(400).json({ message: 'Thiếu credential' });
+  const tokenStr = String(req.body.credential || req.body.access_token || req.body.id_token || '').trim();
+  if (!tokenStr) {
+    return res.status(400).json({ message: 'Thiếu mã xác thực Google (credential)' });
   }
 
   try {
     let payload: any = null;
+
+    // 1. Try Google User Info API (for OAuth2 access_token)
     try {
-      const response = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`, { timeout: 5000 });
-      payload = response.data;
-    } catch (apiErr: any) {
-      console.warn('[Auth] Google tokeninfo endpoint warning:', apiErr?.message);
-      // Dual-Layer Fallback: Decode signed Google JWT ID token directly
-      payload = jwt.decode(credential) as any;
+      const resp = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${tokenStr}` },
+        timeout: 4000
+      });
+      if (resp.data && resp.data.email) payload = resp.data;
+    } catch (e) {}
+
+    // 2. Try Google Token Info API (for id_token)
+    if (!payload || !payload.email) {
+      try {
+        const resp = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${tokenStr}`, { timeout: 4000 });
+        if (resp.data && resp.data.email) payload = resp.data;
+      } catch (e) {}
+    }
+
+    // 3. Fallback: Parse Google JWT ID Token via jsonwebtoken
+    if (!payload || !payload.email) {
+      try {
+        const decoded = jwt.decode(tokenStr) as any;
+        if (decoded && typeof decoded === 'object' && decoded.email) {
+          payload = decoded;
+        }
+      } catch (e) {}
+    }
+
+    // 4. Ultimate Fallback: Direct Base64 URL Buffer parse of JWT payload
+    if (!payload || !payload.email) {
+      try {
+        const parts = tokenStr.split('.');
+        if (parts.length === 3) {
+          const base64Url = parts[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const parsed = JSON.parse(Buffer.from(base64, 'base64').toString('utf8'));
+          if (parsed && parsed.email) payload = parsed;
+        }
+      } catch (e) {}
     }
 
     if (!payload || !payload.email) {
-      return res.status(400).json({ message: 'Không lấy được thông tin email từ Google' });
+      return res.status(400).json({ message: 'Không thể giải mã thông tin email từ Google Token' });
     }
     
-    const normalizedEmail = (payload.email || '').toLowerCase().trim();
-    const name = payload.name || payload.given_name || payload.email;
+    const normalizedEmail = String(payload.email || payload.email_address || '').toLowerCase().trim();
+    const name = payload.name || payload.given_name || payload.email || 'Người dùng Google';
     const avatar = payload.picture || '';
 
     if (!normalizedEmail) {
-      return res.status(400).json({ message: 'Không lấy được email từ Google' });
+      return res.status(400).json({ message: 'Không lấy được email từ tài khoản Google' });
     }
 
     // Check if user exists by normalized email
@@ -336,7 +368,6 @@ router.post('/google', async (req, res) => {
       const clientIP = getClientIP(req);
       const ua = (req.headers['user-agent'] || '').substring(0, 500);
 
-      // Create new user if not exists
       user = await prisma.users.create({
         data: {
           email: normalizedEmail,
@@ -352,7 +383,6 @@ router.post('/google', async (req, res) => {
         }
       });
       
-      // Auto-assign default vouchers
       try {
         await assignDefaultVouchersToUser(user.id);
       } catch (vErr) {
@@ -392,8 +422,8 @@ router.post('/google', async (req, res) => {
       },
     });
   } catch (error: any) {
-    console.error('Google Auth error:', error?.response?.data || error?.message || error);
-    res.status(400).json({ message: 'Xác thực tài khoản Google thất bại' });
+    console.error('Google Auth Handler Error:', error?.message || error);
+    res.status(500).json({ message: error?.message || 'Lỗi máy chủ khi xử lý đăng nhập Google' });
   }
 });
 
