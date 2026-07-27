@@ -2606,9 +2606,12 @@ const jdStorage = multer.diskStorage({
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[đĐ]/g, "d")
-      .replace(/[^a-zA-Z0-9\s-]/g, "")
-      .replace(/\s+/g, '-');
-    const finalName = `jd-${sanitized || 'doc'}-${Date.now()}${ext}`;
+      .replace(/[^a-zA-Z0-9-]/g, "-")
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .toLowerCase();
+    const safeExt = ext.toLowerCase() || '.pdf';
+    const finalName = `jd-${sanitized || 'file'}-${Date.now()}${safeExt}`;
     cb(null, finalName);
   }
 });
