@@ -9,20 +9,11 @@ import { toast } from "sonner";
 import { 
   Upload, FileText, Loader2, Sparkles, MapPin, Clock, Briefcase, 
   ArrowRight, ShieldCheck, Building2, Store, Radio, Camera, Users,
-  Heart, Coffee, Award, ChevronDown, CheckCircle2
+  Heart, Coffee, Award, ChevronDown, CheckCircle2, X, Download, ExternalLink, Eye
 } from "lucide-react";
 
 const Recruitment = () => {
-  const [content, setContent] = useState<{
-    title: string;
-    desc: string;
-    sections: { title: string; content: string }[];
-    updatedAt?: string;
-    seoTitle?: string;
-    seoDesc?: string;
-    seoKeywords?: string;
-    bannerImage?: string;
-  } | null>(null);
+  const [content, setContent] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -37,6 +28,8 @@ const Recruitment = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
   const jobsRef = useRef<HTMLDivElement>(null);
+
+  const [activeJdModalJob, setActiveJdModalJob] = useState<any | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -74,7 +67,6 @@ const Recruitment = () => {
     setUploadProgress(true);
 
     try {
-      // 1. Upload CV file
       const uploadData = new FormData();
       uploadData.append("cvFile", cvFile);
 
@@ -91,7 +83,6 @@ const Recruitment = () => {
       const { fileUrl } = await uploadRes.json();
       setUploadProgress(false);
 
-      // 2. Submit Application via contact API
       const contactPayload = {
         name: formData.name.trim(),
         phone: formData.phone.trim(),
@@ -136,9 +127,149 @@ const Recruitment = () => {
     }
   };
 
-  const [recruitmentArticles, setRecruitmentArticles] = useState<any[]>([]);
-  const [loadingArticles, setLoadingArticles] = useState(true);
-  const [expandedArticleSlug, setExpandedArticleSlug] = useState<string | null>(null);
+  const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
+  const [selectedDept, setSelectedDept] = useState<string>('all');
+
+  useEffect(() => {
+    fetch(`/api/settings/page/page_recruitment?_t=${Date.now()}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          setContent(data);
+        }
+      })
+      .catch(err => console.error("Load recruitment page error:", err));
+  }, []);
+
+  const allJobs = useMemo(() => {
+    if (content?.tabsConfig && Array.isArray(content.tabsConfig) && content.tabsConfig.length > 0) {
+      return content.tabsConfig.filter((j: any) => j.isActive !== false);
+    }
+    return [
+      {
+        id: 'job-1',
+        title: 'Thực tập sinh Thương mại điện tử (E-commerce Intern)',
+        department: 'ecom',
+        departmentName: 'TMĐT',
+        location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+        type: 'Ca linh hoạt / Toàn thời gian',
+        excerpt: 'Đam mê vận hành gian hàng Shopee, TikTok Shop, Lazada, hỗ trợ flashsale, quản lý kho & tối ưu doanh số mỹ phẩm Hàn Quốc.',
+        jdFileUrl: '/uploads/jd/GC_NATURE_TUYỂN_DỤNG_THỰC_TẬP_SINH_THƯƠNG_MẠI_ĐIỆN_TỬ.pdf',
+        jdFileName: '[GC NATURE] TUYỂN DỤNG_ THỰC TẬP SINH THƯƠNG MẠI ĐIỆN TỬ.pdf',
+        contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Hỗ trợ đăng tải sản phẩm, thiết kế giao diện gian hàng Shopee / TikTok Shop / Lazada.</p><p>- Quản lý đơn hàng, phản hồi tin nhắn khách hàng & hỗ trợ chuẩn bị sản phẩm cho phiên livestream.</p><p>- Tham gia cài đặt chương trình khuyến mãi Flashsale, Voucher giảm giá & tối ưu doanh số.</p><h3>2. YÊU CẦU ỨNG VIÊN</h3><p>- Đam mê ngành hàng Mỹ phẩm Skincare Hàn Quốc.</p><p>- Nhanh nhẹn, có tinh thần trách nhiệm & tư duy E-Commerce năng động.</p><h3>3. QUYỀN LỢI & THƯỞNG</h3><p>- Phụ cấp thực tập + Thưởng % doanh số gian hàng hấp dẫn.</p><p>- Được đào tạo bài bản 1-on-1 từ Trưởng phòng E-Commerce.</p><p>- Hỗ trợ con dấu xác nhận thực tập cho sinh viên.</p>',
+        isActive: true
+      },
+      {
+        id: 'job-2',
+        title: 'Thực tập sinh SEO Websites',
+        department: 'seo',
+        departmentName: 'SEO',
+        location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+        type: 'Ca linh hoạt / Toàn thời gian',
+        excerpt: 'Nghiên cứu bộ từ khóa xu hướng mỹ phẩm Hàn Quốc, viết bài chuẩn SEO Onpage và tối ưu thứ hạng website GCnature.',
+        jdFileUrl: '/uploads/jd/GC_NATURE_TUYỂN_DỤNG_THỰC_TẬP_SINH_SEO.pdf',
+        jdFileName: '[GC NATURE] TUYỂN DỤNG_ THỰC TẬP SINH SEO.pdf',
+        contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Nghiên cứu từ khóa xu hướng Skincare & Làm đẹp chuẩn Hàn Quốc.</p><p>- Viết và tối ưu bài viết bài viết kiến thức chăm sóc da chuẩn SEO Onpage trên website GCnature.</p><p>- Kiểm tra backlink, thứ hạng Google & hỗ trợ tối ưu trải nghiệm người dùng trên website.</p><h3>2. YÊU CẦU ỨNG VIÊN</h3><p>- Đam mê công việc SEO, làm nội dung blog & tối ưu công cụ tìm kiếm Google.</p><p>- Có kỹ năng viết lách tốt, cẩn thận, ham học hỏi.</p><h3>3. QUYỀN LỢI</h3><p>- Trợ cấp hàng tháng + Thưởng KPI bài viết đạt top Google.</p><p>- Được hướng dẫn quy trình SEO Onpage/Offpage thực chiến chuyên sâu.</p>',
+        isActive: true
+      },
+      {
+        id: 'job-3',
+        title: 'Thực tập sinh Marketing / Content',
+        department: 'marketing',
+        departmentName: 'Marketing',
+        location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+        type: 'Ca linh hoạt / Toàn thời gian',
+        excerpt: 'Sáng tạo nội dung Fanpage, Instagram, thiết kế hình ảnh banner & xây dựng kịch bản truyền thông mỹ phẩm.',
+        jdFileUrl: '/uploads/jd/TUYỂN_DỤNG_THỰC_TẬP_SINH_MARKETING.pdf',
+        jdFileName: 'TUYỂN DỤNG_ THỰC TẬP SINH MARKETING.pdf',
+        contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Sáng tạo ý tưởng nội dung bài đăng Fanpage Facebook, Instagram, TikTok.</p><p>- Lên kịch bản video ngắn và phối hợp với đội ngũ Video Editor để quay dựng.</p><p>- Lập kế hoạch truyền thông cho các dòng sản phẩm mặt nạ, serum, kem dưỡng GCnature.</p><h3>2. YÊU CẦU ỨNG VIÊN</h3><p>- Có khả năng tư duy sáng tạo nội dung bắt trend nhanh.</p><p>- Yêu thích làm đẹp, hiểu biết về các thành phần dưỡng da Hàn Quốc.</p><h3>3. QUYỀN LỢI</h3><p>- Môi trường làm việc Gen Z năng động, sáng tạo.</p><p>- Phụ cấp hàng tháng & cơ hội trở thành Nhân viên chính thức sau 3 tháng.</p>',
+        isActive: true
+      },
+      {
+        id: 'job-4',
+        title: 'Thực tập sinh Truyền thông & Thương hiệu',
+        department: 'media',
+        departmentName: 'Truyền thông',
+        location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+        type: 'Ca linh hoạt / Toàn thời gian',
+        excerpt: 'Kết nối KOC/KOL làm đẹp, gửi mẫu trải nghiệm sản phẩm, hỗ trợ PR sự kiện thương hiệu mỹ phẩm.',
+        jdFileUrl: '/uploads/jd/TUYỂN_DỤNG_THỰC_TẬP_SINH_TRUYỀN_THÔNG.pdf',
+        jdFileName: 'TUYỂN DỤNG_ THỰC TẬP SINH TRUYỀN THÔNG.pdf',
+        contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Tìm kiếm, kết nối và đàm phán hợp tác với KOL/KOC trong lĩnh vực Mỹ phẩm & Skincare.</p><p>- Điều phối gửi sản phẩm mẫu trải nghiệm và theo dõi bài đăng của KOL/KOC.</p><p>- Hỗ trợ chuẩn bị sự kiện ra mắt sản phẩm mới và thông tin PR báo chí.</p><h3>2. YÊU CẦU ỨNG VIÊN</h3><p>- Kỹ năng giao tiếp, đàm phán tốt & nhạy bén với các Beauty Influencer trên Social.</p><p>- Năng nổ, chủ động trong công việc.</p><h3>3. QUYỀN LỢI</h3><p>- Trợ cấp hấp dẫn + Thưởng chương trình hợp tác KOL/KOC thành công.</p>',
+        isActive: true
+      },
+      {
+        id: 'job-5',
+        title: 'Nhân viên Truyền thông (Chính thức)',
+        department: 'media',
+        departmentName: 'Truyền thông',
+        location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+        type: 'Toàn thời gian (Full-time)',
+        excerpt: 'Lập kế hoạch chiến dịch truyền thông tổng thể, định vị thương hiệu mỹ phẩm Hàn Quốc GCnature trên đa kênh.',
+        jdFileUrl: '/uploads/jd/TUYỂN_DỤNG_NHÂN_VIÊN_TRUYỀN_THÔNG.pdf',
+        jdFileName: 'TUYỂN DỤNG_ NHÂN VIÊN TRUYỀN THÔNG.pdf',
+        contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Xây dựng và triển khai chiến lược truyền thông thương hiệu GCnature trên Báo chí, Mạng xã hội & Event.</p><p>- Quản lý mối quan hệ với đối tác truyền thông, cơ quan báo chí & Agency.</p><p>- Đo lường hiệu quả các chiến dịch PR Thương hiệu và điều chỉnh tối ưu.</p><h3>2. YÊU CẦU ỨNG VIÊN</h3><p>- Tốt nghiệp đại học chuyên ngành Truyền thông, PR, Marketing hoặc liên quan.</p><p>- Có từ 1-2 năm kinh nghiệm trong ngành Mỹ phẩm, Skincare hoặc FMCG.</p><h3>3. QUYỀN LỢI</h3><p>- Lương cứng cạnh tranh từ 10 - 15 triệu + Thưởng KPI chiến dịch.</p><p>- Thưởng tháng 13, BHXH đầy đủ & du lịch hàng năm.</p>',
+        isActive: true
+      },
+      {
+        id: 'job-6',
+        title: 'Thực tập sinh Livestream TikTok / Shopee',
+        department: 'livestream',
+        departmentName: 'Livestream',
+        location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+        type: 'Ca linh hoạt / Toàn thời gian',
+        excerpt: 'Hỗ trợ vận hành phiên live, ghim deal flashsale, tư vấn sản phẩm và tương tác với người xem phiên livestream.',
+        jdFileUrl: '/uploads/jd/TUYỂN_DỤNG_THỰC_TẬP_SINH_LIVESTREAM_TIK_TOK_SHOPEE.pdf',
+        jdFileName: 'TUYỂN DỤNG_ THỰC TẬP SINH LIVESTREAM TIK TOK_SHOPEE.pdf',
+        contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Trợ lý phiên live: Ghim sản phẩm, tung voucher flashsale & điều phối kỹ thuật Studio Live.</p><p>- Tham gia cùng Host đứng phiên livestream tư vấn công dụng mặt nạ, serum GCnature.</p><p>- Tổng hợp số liệu doanh thu sau mỗi ca live để báo cáo cải thiện.</p><h3>2. YÊU CẦU ỨNG VIÊN</h3><p>- Tự tin, ngoại hình sáng, nói chuyện lưu thoát & tự nhiên trước ống kính.</p><p>- Đam mê bán hàng Livestream Commerce.</p><h3>3. QUYỀN LỢI</h3><p>- Phụ cấp ca live + Thưởng doanh số livestream siêu hấp dẫn.</p>',
+        isActive: true
+      },
+      {
+        id: 'job-7',
+        title: 'Chuyên viên Livestream (Host Live Chính thức)',
+        department: 'livestream',
+        departmentName: 'Livestream',
+        location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+        type: 'Toàn thời gian (Full-time)',
+        excerpt: 'Trực tiếp đứng phiên livestream tư vấn chốt đơn các sản phẩm mỹ phẩm Hàn Quốc trên TikTok Shop & Shopee Live.',
+        jdFileUrl: '/uploads/jd/TUYỂN_DỤNG_LIVESTREAM_TIK_TOK_SHOPEE.pdf',
+        jdFileName: 'TUYỂN DỤNG_ LIVESTREAM TIK TOK_SHOPEE.pdf',
+        contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Đứng phiên livestream chính tư vấn chi tiết thành phần, công dụng & ưu đãi mỹ phẩm GCnature.</p><p>- Làm chủ không khí ca live, tương tác nảy lửa với khách hàng để chốt đơn hàng liên tục.</p><p>- Phối hợp với team E-Commerce chuẩn bị độc quyền deal Flashsale siêu hời.</p><h3>2. YÊU CẦU ỨNG VIÊN</h3><p>- Đã có kinh nghiệm Livestream bán hàng Mỹ phẩm / Thời trang / Skincare thành thạo.</p><p>- Giọng nói chuẩn, năng lượng cao, biết cách chốt deal tự nhiên.</p><h3>3. QUYỀN LỢI</h3><p>- Lương thỏa thuận cao (8 - 18 triệu) + % HOA HỒNG CHIẾT KHẤU DOANH SỐ CA LIVE BỨC PHÁ.</p>',
+        isActive: true
+      },
+      {
+        id: 'job-8',
+        title: 'Thực tập sinh Video Editor (Quay Dựng)',
+        department: 'editor',
+        departmentName: 'Video Editor',
+        location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+        type: 'Ca linh hoạt / Toàn thời gian',
+        excerpt: 'Quay & biên tập video ngắn TikTok/Reels, cắt dựng clip trải nghiệm mặt nạ, serum, góc quay ấn tượng.',
+        jdFileUrl: '/uploads/jd/TUYỂN_DỤNG_THỰC_TẬP_SINH_EDITOR.pdf',
+        jdFileName: 'TUYỂN DỤNG_ THỰC TẬP SINH EDITOR.pdf',
+        contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Hỗ trợ quay phim và dựng video ngắn TikTok, Reels, Shorts về sản phẩm mỹ phẩm GCnature.</p><p>- Chèn hiệu ứng sound effect, subtitle và tối ưu màu sắc hình ảnh thu hút.</p><p>- Theo dõi xu hướng video làm đẹp bắt mắt trên TikTok.</p><h3>2. YÊU CẦU ỨNG VIÊN</h3><p>- Sử dụng cơ bản CapCut, Premiere Pro, Photoshop hoặc Canva.</p><p>- Gu thẩm mỹ tốt, đam mê lĩnh vực sản xuất video ngắn.</p><h3>3. QUYỀN LỢI</h3><p>- Phụ cấp hàng tháng + Thưởng theo lượng view video đạt mốc xu hướng.</p>',
+        isActive: true
+      },
+      {
+        id: 'job-9',
+        title: 'Nhân viên Video Editor (Chính thức)',
+        department: 'editor',
+        departmentName: 'Video Editor',
+        location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+        type: 'Toàn thời gian (Full-time)',
+        excerpt: 'Phụ trách toàn bộ quy trình sản xuất video quảng cáo TikTok Ads, Reels, Youtube Shorts chuyên nghiệp.',
+        jdFileUrl: '/uploads/jd/Tuyển_dụng_nhân_viên_Editor.pdf',
+        jdFileName: 'Tuyển dụng nhân viên Editor.pdf',
+        contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Lên ý tưởng góc quay, đạo diễn hình ảnh & dựng hoàn chỉnh video ngắn quảng cáo mỹ phẩm Hàn Quốc.</p><p>- Tối ưu định dạng video chạy quảng cáo TikTok Ads, Meta Ads đạt tỷ lệ chuyển đổi cao.</p><p>- Quản lý hệ thống lưu trữ tài nguyên hình ảnh & video thương hiệu.</p><h3>2. YÊU CẦU ỨNG VIÊN</h3><p>- Thành thạo Adobe Premiere, After Effects, Photoshop.</p><p>- Đã có sản phẩm video ngắn hoặc portfolio từng thực hiện thành công.</p><h3>3. QUYỀN LỢI</h3><p>- Lương cứng 9 - 14 triệu + Thưởng KPI doanh số video quảng cáo.</p><p>- Môi trường sáng tạo, thiết bị làm việc hiện đại.</p>',
+        isActive: true
+      }
+    ];
+  }, [content]);
+
+  const filteredJobs = useMemo(() => {
+    if (selectedDept === 'all') return allJobs;
+    return allJobs.filter((j: any) => j.department === selectedDept);
+  }, [allJobs, selectedDept]);
 
   const handleApplyClick = (positionTitle: string) => {
     let targetPosition = positionTitle.replace(/^\[GC NATURE\] TUYỂN DỤNG:\s*/i, '').trim();
@@ -149,50 +280,6 @@ const Recruitment = () => {
     }
   };
 
-  const [selectedDept, setSelectedDept] = useState<'all' | 'ecom' | 'seo' | 'marketing' | 'media' | 'editor' | 'livestream'>('all');
-
-  const getArticleDeptKey = (title: string): 'ecom' | 'seo' | 'marketing' | 'media' | 'editor' | 'livestream' | 'other' => {
-    const t = title.toLowerCase();
-    if (t.includes('thương mại điện tử') || t.includes('tmđt') || t.includes('e-commerce') || t.includes('shopee')) return 'ecom';
-    if (t.includes('seo') || t.includes('từ khóa') || t.includes('website')) return 'seo';
-    if (t.includes('marketing') || t.includes('tiếp thị')) return 'marketing';
-    if (t.includes('truyền thông') || t.includes('pr')) return 'media';
-    if (t.includes('editor') || t.includes('dựng phim') || t.includes('video')) return 'editor';
-    if (t.includes('livestream') || t.includes('live stream') || t.includes('trợ live')) return 'livestream';
-    return 'other';
-  };
-
-  const filteredArticles = useMemo(() => {
-    if (selectedDept === 'all') return recruitmentArticles;
-    return recruitmentArticles.filter(a => getArticleDeptKey(a.title) === selectedDept);
-  }, [recruitmentArticles, selectedDept]);
-
-  useEffect(() => {
-    fetch(`/api/settings/page/page_recruitment?_t=${Date.now()}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.sections && data.sections.length > 0) {
-          setContent(data);
-        }
-      })
-      .catch(err => console.error("Load recruitment page error:", err));
-
-    fetch(`/api/articles?_t=${Date.now()}`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          const filtered = data.filter(a => {
-            const cat = (a.category || "").toLowerCase().trim();
-            return cat === "tuyển dụng" || cat === "tuyendung" || cat === "tuyen-dung";
-          });
-          setRecruitmentArticles(filtered);
-        }
-      })
-      .catch(err => console.error("Load recruitment articles error:", err))
-      .finally(() => setLoadingArticles(false));
-  }, []);
-
-  // Office Locations Data
   const officeLocations = [
     {
       city: "CS HÀ NỘI (CƠ SỞ 1)",
@@ -237,7 +324,6 @@ const Recruitment = () => {
       <Header />
 
       <main className="space-y-16 md:space-y-24">
-        {/* ═══ 1. LUXURY HERO BANNER ═══ */}
         <section 
           className="relative overflow-hidden py-20 md:py-28 bg-slate-950 text-white bg-cover bg-center"
           style={{ 
@@ -248,107 +334,101 @@ const Recruitment = () => {
           
           <div className="container mx-auto px-4 relative z-10 text-center max-w-4xl space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-bold uppercase tracking-widest backdrop-blur-md">
-              <Sparkles className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
-              GCnature Korea Careers & Culture Portal
+              <Sparkles className="w-4 h-4 text-teal-400" /> CHÀO MỪNG BẠN ĐẾN VỚI GC NATURE
             </div>
 
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight uppercase leading-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-teal-200">
-              {content?.title || "Tuyển Dụng: Gia Nhập Đội Ngũ GCnature"}
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
+              {content?.title || "GC Nature Tuyển Dụng"}
             </h1>
 
-            <p className="text-base md:text-lg text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed">
-              {content?.desc || "Thương hiệu mỹ phẩm nội địa Hàn Quốc chính hãng đang tìm kiếm những mảnh ghép đam mê E-commerce, SEO, Content & Livestream Commerce!"}
+            <p className="text-sm md:text-lg text-slate-300 font-normal leading-relaxed max-w-2xl mx-auto">
+              {content?.desc || "Gia nhập nhà GC Nature chúng mình để cùng sáng tạo những ý tưởng tiếp thị độc đáo, cùng học hỏi và kiến tạo giá trị thương hiệu mỹ phẩm tự nhiên chuẩn Hàn Quốc!"}
             </p>
 
-            {/* Action Buttons */}
-            <div className="pt-4 flex flex-wrap justify-center items-center gap-4">
+            <div className="pt-4 flex flex-wrap justify-center gap-4">
               <button 
-                onClick={() => jobsRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-7 py-3.5 bg-teal-600 hover:bg-teal-500 text-white font-bold rounded-xl shadow-lg shadow-teal-900/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2 text-sm"
+                onClick={() => jobsRef.current?.scrollIntoView({ behavior: "smooth" })}
+                className="px-7 py-3.5 bg-teal-600 hover:bg-teal-500 text-white font-extrabold text-xs md:text-sm rounded-xl transition-all shadow-lg hover:shadow-teal-500/20 flex items-center gap-2"
               >
-                Khám Phá Các Vị Trí Đang Tuyển <ArrowRight className="w-4 h-4" />
+                <Briefcase className="w-4 h-4" /> Xem Các Vị Trí Đang Tuyển
               </button>
               <button 
-                onClick={() => formRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                className="px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl border border-white/20 transition-all text-sm backdrop-blur-md"
+                onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth" })}
+                className="px-7 py-3.5 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-extrabold text-xs md:text-sm rounded-xl transition-all backdrop-blur-md flex items-center gap-2"
               >
-                Nộp CV Trực Tiếp
+                <Upload className="w-4 h-4" /> Nộp Hồ Sơ CV Trực Tiếp
               </button>
             </div>
           </div>
         </section>
 
-        {/* ═══ 2. THAY THẾ SECTION: 3 CƠ SỞ VĂN PHÒNG GC NATURE ═══ */}
-        <section className="container mx-auto px-4 max-w-6xl">
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-10 shadow-2xs space-y-8">
-            <div className="text-center max-w-2xl mx-auto space-y-2 border-b border-slate-100 pb-6">
-              <div className="inline-flex items-center gap-2 text-teal-600 font-bold text-xs uppercase tracking-wider">
-                <MapPin className="w-4 h-4 text-teal-600" />
-                Hệ Thống Môi Trường Làm Việc
-              </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Địa Điểm Văn Phòng Tại 3 Cơ Sở GC Nature
-              </h2>
-              <p className="text-xs md:text-sm text-slate-500">
-                Môi trường làm việc chuẩn hiện đại, kết nối giao thông thuận tiện tại trung tâm Hà Nội & TP. Hồ Chí Minh
-              </p>
-            </div>
+        <section className="container mx-auto px-4 max-w-6xl space-y-8">
+          <div className="text-center space-y-2 max-w-2xl mx-auto">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-teal-800 bg-teal-50 px-3 py-1 rounded-full border border-teal-200/60">
+              📍 VĂN PHÒNG LÀM VIỆC MODERN
+            </span>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Hệ Thống Cơ Sở & Văn Phòng Năng Động
+            </h2>
+            <p className="text-xs md:text-sm text-slate-500">
+              Không gian sáng tạo, trang thiết bị livestream 4K và môi trường Gen Z cởi mở tại Hà Nội và TP.HCM
+            </p>
+          </div>
 
-            {/* 3 Office Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {officeLocations.map((loc, i) => {
-                const IconComponent = loc.icon;
-                return (
-                  <div 
-                    key={i} 
-                    className="bg-slate-50/70 rounded-2xl border border-slate-200/80 p-6 space-y-4 flex flex-col justify-between hover:shadow-md hover:border-teal-400/60 transition-all duration-300 group"
-                  >
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className={`${loc.badgeColor} text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider shadow-2xs`}>
-                          {loc.city}
-                        </span>
-                        <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold group-hover:scale-110 transition-transform">
-                          <IconComponent className="w-5 h-5" />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2.5">
-                        <h3 className="font-extrabold text-slate-900 text-base group-hover:text-teal-700 transition-colors">
-                          {loc.name}
-                        </h3>
-                        <p className="text-xs font-semibold text-slate-700 leading-relaxed flex items-start gap-2 bg-white p-3.5 rounded-xl border border-slate-200/60 shadow-2xs">
-                          <MapPin className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
-                          <span>{loc.address}</span>
-                        </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {officeLocations.map((loc, idx) => {
+              const IconComp = loc.icon;
+              return (
+                <div 
+                  key={idx}
+                  className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 space-y-5 shadow-2xs hover:shadow-lg transition-all duration-300 relative group overflow-hidden flex flex-col justify-between"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[10px] font-extrabold uppercase text-white ${loc.badgeColor} px-3 py-1 rounded-full tracking-wider shadow-xs`}>
+                        {loc.tag}
+                      </span>
+                      <div className="w-10 h-10 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center">
+                        <IconComp className="w-5 h-5" />
                       </div>
                     </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[11px] font-bold text-slate-400 tracking-wider uppercase block">{loc.city}</span>
+                      <h3 className="text-base md:text-lg font-extrabold text-slate-900 group-hover:text-teal-700 transition-colors leading-snug">
+                        {loc.name}
+                      </h3>
+                    </div>
+
+                    <div className="flex items-start gap-2 text-xs text-slate-600 font-normal leading-relaxed pt-1 border-t border-slate-100">
+                      <MapPin className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
+                      <span>{loc.address}</span>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
         </section>
 
-        {/* ═══ 3. THAY THẾ SECTION: ALBUM HÌNH ẢNH VĂN HÓA DOANH NGHIỆP (BENTO MASONRY GRID) ═══ */}
-        <section className="container mx-auto px-4 max-w-6xl">
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-10 shadow-2xs space-y-8">
-            <div className="text-center max-w-2xl mx-auto space-y-2 border-b border-slate-100 pb-6">
-              <div className="inline-flex items-center gap-2 text-teal-600 font-bold text-xs uppercase tracking-wider">
-                <Camera className="w-4 h-4 text-teal-600" />
-                Văn Hóa & Con Người GC Nature
+        <section className="container mx-auto px-4 max-w-6xl space-y-6">
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-10 shadow-sm space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-teal-800 bg-teal-50 px-3 py-1 rounded-full">
+                  📸 ALBUM HÌNH ẢNH THỰC TẾ
+                </span>
+                <h3 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight mt-2">
+                  Cuộc Sống Thường Ngày Tại GC Nature
+                </h3>
               </div>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Album Khoảnh Khắc Teamwork & Đời Sống Văn Phòng
-              </h2>
-              <p className="text-xs md:text-sm text-slate-500">
-                Năng lượng trẻ trung, môi trường cởi mở, không gian làm việc mộng mơ và những buổi tiệc chill cùng đồng nghiệp Gen Z!
-              </p>
+              <div className="flex items-center gap-4 text-xs font-bold text-slate-600">
+                <span className="flex items-center gap-1.5"><Heart className="w-4 h-4 text-rose-500" /> Môi Trường Thân Thiện</span>
+                <span className="flex items-center gap-1.5"><Coffee className="w-4 h-4 text-amber-600" /> Trà Chiều Free Mỗi Tuần</span>
+              </div>
             </div>
 
-            {/* Bento Grid Gallery with Different Aspect Ratios */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              {/* Photo 1: Large Main Hero Photo (2 cols, 2 rows) */}
               <div className="sm:col-span-2 md:col-span-2 md:row-span-2 relative group overflow-hidden rounded-2xl bg-slate-900 min-h-[300px]">
                 <img
                   src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1000&auto=format&fit=crop&q=80"
@@ -363,7 +443,6 @@ const Recruitment = () => {
                 </div>
               </div>
 
-              {/* Photo 2: Studio Livestream (1 col, 1 row) */}
               <div className="relative group overflow-hidden rounded-2xl bg-slate-900 h-48 sm:h-auto">
                 <img
                   src="https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=600&auto=format&fit=crop&q=80"
@@ -377,7 +456,6 @@ const Recruitment = () => {
                 </div>
               </div>
 
-              {/* Photo 3: Workspace Environment (1 col, 1 row) */}
               <div className="relative group overflow-hidden rounded-2xl bg-slate-900 h-48 sm:h-auto">
                 <img
                   src="https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&auto=format&fit=crop&q=80"
@@ -391,7 +469,6 @@ const Recruitment = () => {
                 </div>
               </div>
 
-              {/* Photo 4: Training & Workshop (1 col, 1 row) */}
               <div className="relative group overflow-hidden rounded-2xl bg-slate-900 h-48 sm:h-auto">
                 <img
                   src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=600&auto=format&fit=crop&q=80"
@@ -405,7 +482,6 @@ const Recruitment = () => {
                 </div>
               </div>
 
-              {/* Photo 5: Team Building & Party (1 col, 1 row) */}
               <div className="relative group overflow-hidden rounded-2xl bg-slate-900 h-48 sm:h-auto">
                 <img
                   src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=600&auto=format&fit=crop&q=80"
@@ -422,7 +498,6 @@ const Recruitment = () => {
           </div>
         </section>
 
-        {/* ═══ 4. DETAILED JOB POSTINGS WITH EXPANDABLE ACCORDIONS ═══ */}
         <section ref={jobsRef} className="container mx-auto px-4 max-w-6xl space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
             <div>
@@ -431,11 +506,10 @@ const Recruitment = () => {
                 Các Vị Trí Đang Tuyển Dụng (Mô Tả JD Chi Tiết)
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Xem thông tin Mô tả công việc, Yêu cầu ứng viên và Quyền lợi cho từng vị trí
+                Xem thông tin Mô tả công việc, Yêu cầu ứng viên và đính kèm file JD cho từng vị trí
               </p>
             </div>
 
-            {/* Department Filter Bar */}
             <div className="flex flex-wrap gap-2">
               {[
                 { key: 'all', label: 'Tất cả vị trí' },
@@ -448,7 +522,7 @@ const Recruitment = () => {
               ].map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setSelectedDept(tab.key as any)}
+                  onClick={() => setSelectedDept(tab.key)}
                   className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
                     selectedDept === tab.key
                       ? "bg-teal-600 text-white shadow-sm"
@@ -461,43 +535,75 @@ const Recruitment = () => {
             </div>
           </div>
 
-          {/* Detailed Job Cards List */}
           <div className="space-y-5">
-            {filteredArticles.length === 0 ? (
+            {filteredJobs.length === 0 ? (
               <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center text-slate-500 text-sm">
                 Hiện tại chưa có bài đăng mô tả chi tiết cho phòng ban này. Bạn có thể nộp CV trực tiếp ở form ứng tuyển bên dưới!
               </div>
             ) : (
-              filteredArticles.map((article, idx) => {
-                const isExpanded = expandedArticleSlug === article.slug;
+              filteredJobs.map((job: any, idx: number) => {
+                const jobIdStr = job.id || `job-${idx}`;
+                const isExpanded = expandedJobId === jobIdStr;
                 return (
                   <div 
-                    key={idx} 
+                    key={jobIdStr} 
                     className="bg-white rounded-2xl border border-slate-200/80 p-6 md:p-8 space-y-4 shadow-2xs hover:shadow-md transition-all duration-300"
                   >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="space-y-1.5">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-800 bg-teal-50 border border-teal-200/60 px-3 py-1 rounded-full inline-block">
-                          🔥 GC Nature Recruiting
-                        </span>
-                        <h2 className="text-lg md:text-xl font-extrabold text-slate-900 hover:text-teal-700 transition-colors">
-                          {article.title}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-800 bg-teal-50 border border-teal-200/60 px-3 py-1 rounded-full inline-block">
+                            🔥 GC Nature Recruiting
+                          </span>
+                          {job.jdFileUrl && (
+                            <button
+                              onClick={() => window.open(job.jdFileUrl, '_blank')}
+                              className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1 rounded-full inline-flex items-center gap-1 transition-all"
+                            >
+                              <FileText className="w-3 h-3 text-emerald-600" /> Tệp JD: {job.jdFileName || 'Xem PDF/Ảnh JD'}
+                            </button>
+                          )}
+                        </div>
+
+                        <h2 
+                          onClick={() => {
+                            if (job.jdFileUrl) window.open(job.jdFileUrl, '_blank');
+                            else setActiveJdModalJob(job);
+                          }}
+                          className="text-lg md:text-xl font-extrabold text-slate-900 hover:text-teal-700 transition-colors cursor-pointer"
+                        >
+                          {job.title}
                         </h2>
+
                         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-0.5 font-medium">
-                          <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-teal-600" /> S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội</span>
-                          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-teal-600" /> Ca linh hoạt / Toàn thời gian</span>
+                          <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-teal-600" /> {job.location || "Hà Nội"}</span>
+                          <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-teal-600" /> {job.type || "Ca linh hoạt / Toàn thời gian"}</span>
                         </div>
                       </div>
 
-                      <div className="flex gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
-                          onClick={() => setExpandedArticleSlug(isExpanded ? null : article.slug)}
-                          className="px-4 py-2 border border-slate-200 hover:border-teal-500 rounded-xl text-xs font-bold text-slate-700 hover:text-teal-700 transition-all h-10 flex items-center gap-1.5"
+                          onClick={() => setActiveJdModalJob(job)}
+                          className="px-4 py-2 border border-slate-200 hover:border-teal-500 bg-white text-slate-800 hover:text-teal-700 rounded-xl text-xs font-bold transition-all h-10 flex items-center gap-1.5 shadow-2xs"
                         >
-                          {isExpanded ? "Thu gọn JD" : "Xem chi tiết JD"} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          <Eye className="w-3.5 h-3.5 text-teal-600" /> Xem nhanh
                         </button>
+
                         <button
-                          onClick={() => handleApplyClick(article.title)}
+                          onClick={() => {
+                            if (job.jdFileUrl) {
+                              window.open(job.jdFileUrl, '_blank');
+                            } else {
+                              setActiveJdModalJob(job);
+                            }
+                          }}
+                          className="px-4 py-2 bg-teal-50 hover:bg-teal-100 text-teal-900 border border-teal-200 rounded-xl text-xs font-bold transition-all h-10 flex items-center gap-1.5 shadow-2xs"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-teal-600" /> Xem JD
+                        </button>
+
+                        <button
+                          onClick={() => handleApplyClick(job.title)}
                           className="px-5 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm h-10 flex items-center gap-1.5"
                         >
                           Ứng tuyển ngay <ArrowRight className="w-3.5 h-3.5" />
@@ -506,17 +612,37 @@ const Recruitment = () => {
                     </div>
 
                     <p className="text-slate-600 text-sm leading-relaxed font-normal">
-                      {article.excerpt}
+                      {job.excerpt}
                     </p>
 
-                    {/* Rich HTML Content of JD */}
                     {isExpanded && (
                       <div className="border-t border-slate-100 pt-6 mt-4 prose prose-teal max-w-none text-sm text-slate-700 leading-relaxed font-normal space-y-4">
-                        <div dangerouslySetInnerHTML={{ __html: article.content }} />
+                        {job.jdFileUrl && (
+                          <div className="p-4 bg-teal-50/80 rounded-2xl border border-teal-200 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold">
+                                📄
+                              </div>
+                              <div>
+                                <h4 className="text-xs font-extrabold text-teal-950">Tệp JD Đính Kèm Vị Trí Tuyển Dụng</h4>
+                                <p className="text-[11px] text-teal-700">{job.jdFileName || 'Tệp tài liệu đính kèm (PDF/Ảnh/Word)'}</p>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => setActiveJdModalJob(job)}
+                              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-sm"
+                            >
+                              <Eye className="w-4 h-4" /> Mở Tệp Xem Trực Tiếp
+                            </button>
+                          </div>
+                        )}
+
+                        <div dangerouslySetInnerHTML={{ __html: job.contentHtml || job.content || "<p>Chưa có mô tả bổ sung.</p>" }} />
                         
                         <div className="pt-4 flex justify-end">
                           <button
-                            onClick={() => handleApplyClick(article.title)}
+                            onClick={() => handleApplyClick(job.title)}
                             className="px-6 py-3 bg-teal-600 hover:bg-teal-500 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2"
                           >
                             Ứng Tuyển Ngay Vị Trí Này <ArrowRight className="w-4 h-4" />

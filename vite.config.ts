@@ -27,8 +27,6 @@ export default defineConfig(({ mode }) => ({
   build: {
     // SECURITY: Disable source maps in production to prevent source code exposure
     sourcemap: false,
-    chunkSizeWarningLimit: 1000,
-    cssCodeSplit: true,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

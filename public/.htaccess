@@ -1,66 +1,9 @@
-# ═══ GZIP & BROTLI COMPRESSION (TĂNG TỐC TẢI TRANG) ══════════════════
-<IfModule mod_deflate.c>
-  # Compress HTML, CSS, JavaScript, Text, XML and fonts
-  AddOutputFilterByType DEFLATE application/javascript
-  AddOutputFilterByType DEFLATE application/x-javascript
-  AddOutputFilterByType DEFLATE text/javascript
-  AddOutputFilterByType DEFLATE text/css
-  AddOutputFilterByType DEFLATE text/html
-  AddOutputFilterByType DEFLATE text/plain
-  AddOutputFilterByType DEFLATE text/xml
-  AddOutputFilterByType DEFLATE application/json
-  AddOutputFilterByType DEFLATE application/xml
-  AddOutputFilterByType DEFLATE application/xhtml+xml
-  AddOutputFilterByType DEFLATE application/rss+xml
-  AddOutputFilterByType DEFLATE image/svg+xml
-  AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
-  AddOutputFilterByType DEFLATE application/x-font-ttf
-  AddOutputFilterByType DEFLATE font/opentype
-  AddOutputFilterByType DEFLATE font/ttf
-  AddOutputFilterByType DEFLATE font/eot
-  AddOutputFilterByType DEFLATE font/otf
-</IfModule>
-
-# ═══ BROWSER CACHING (LƯU CACHE MÁY TRẠM) ═════════════════════════════
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresDefault "access plus 1 month"
-
-  # Images & Media
-  ExpiresByType image/jpg "access plus 1 year"
-  ExpiresByType image/jpeg "access plus 1 year"
-  ExpiresByType image/gif "access plus 1 year"
-  ExpiresByType image/png "access plus 1 year"
-  ExpiresByType image/webp "access plus 1 year"
-  ExpiresByType image/svg+xml "access plus 1 year"
-  ExpiresByType image/x-icon "access plus 1 year"
-  ExpiresByType video/mp4 "access plus 1 year"
-
-  # CSS, JavaScript & Fonts
-  ExpiresByType text/css "access plus 1 year"
-  ExpiresByType application/javascript "access plus 1 year"
-  ExpiresByType application/x-javascript "access plus 1 year"
-  ExpiresByType text/javascript "access plus 1 year"
-  ExpiresByType font/ttf "access plus 1 year"
-  ExpiresByType font/woff "access plus 1 year"
-  ExpiresByType font/woff2 "access plus 1 year"
-
-  # HTML & JSON (No cache for fresh data)
-  ExpiresByType text/html "access plus 0 seconds"
-  ExpiresByType application/json "access plus 0 seconds"
-</IfModule>
-
-# Disable ETag to prevent redundant validation requests
-<IfModule mod_headers.c>
-  Header unset ETag
-</IfModule>
-FileETag None
-
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
 
   # ═══ SECURITY: Block access to sensitive files ═══════════════════
+  # Block .env files, .git, source code, and config files
   RewriteRule ^\.env - [F,L]
   RewriteRule ^\.env\..*$ - [F,L]
   RewriteRule ^\.git - [F,L]
@@ -84,12 +27,19 @@ FileETag None
 
   # ═══ SECURITY HEADERS ═══════════════════════════════════════════
   <IfModule mod_headers.c>
+    # Prevent MIME type sniffing
     Header set X-Content-Type-Options "nosniff"
+    # Prevent clickjacking
     Header set X-Frame-Options "SAMEORIGIN"
+    # Enable XSS filter
     Header set X-XSS-Protection "1; mode=block"
+    # Referrer policy
     Header set Referrer-Policy "strict-origin-when-cross-origin"
+    # Permissions policy
     Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    # Strict Transport Security (HTTPS only) — 1 year
     Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    # Remove server version info
     Header unset X-Powered-By
     Header unset Server
 
@@ -98,11 +48,6 @@ FileETag None
       Header set Cache-Control "no-cache, no-store, must-revalidate"
       Header set Pragma "no-cache"
       Header set Expires 0
-    </FilesMatch>
-
-    # Cache static assets (JS, CSS, Images, Fonts) immutable
-    <FilesMatch "\.(js|css|png|jpg|jpeg|gif|webp|svg|woff|woff2|ttf|eot)$">
-      Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
   </IfModule>
 

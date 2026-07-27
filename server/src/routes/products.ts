@@ -65,6 +65,7 @@ router.get('/', async (req, res) => {
         origin: p.origin || '',
         volume: p.volume || '',
         ingredients: p.ingredients || '',
+        seoTags: p.seo_tags || '',
       };
     });
     res.json(mapped);

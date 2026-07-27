@@ -2586,4 +2586,78 @@ router.patch('/articles/:id/toggle', async (req, res) => {
   }
 });
 
+// ═══ RECRUITMENT JD FILE UPLOAD (PDF, PNG, JPG, WORD) ════════════
+const jdStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const jdDir = path.resolve(__dirname, '../../../public/uploads/jd');
+    if (!fs.existsSync(jdDir)) fs.mkdirSync(jdDir, { recursive: true });
+    cb(null, jdDir);
+  },
+  filename: (_req, file, cb) => {
+    let originalName = file.originalname;
+    try {
+      originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    } catch {
+      originalName = file.originalname;
+    }
+    const ext = path.extname(originalName) || path.extname(file.originalname);
+    const baseName = path.basename(originalName, ext);
+    const sanitized = baseName
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .replace(/[^a-zA-Z0-9\s-]/g, "")
+      .replace(/\s+/g, '-');
+    const finalName = `jd-${sanitized || 'doc'}-${Date.now()}${ext}`;
+    cb(null, finalName);
+  }
+});
+
+const jdUpload = multer({
+  storage: jdStorage,
+  limits: { fileSize: 30 * 1024 * 1024 }, // 30MB max
+  fileFilter: (_req, file, cb) => {
+    let originalName = file.originalname;
+    try {
+      originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    } catch {
+      originalName = file.originalname;
+    }
+    const ext = path.extname(originalName) || path.extname(file.originalname);
+    const allowed = /\.(pdf|png|jpg|jpeg|doc|docx|webp)$/i;
+    if (allowed.test(ext) || file.mimetype.includes('pdf') || file.mimetype.includes('image') || file.mimetype.includes('word') || file.mimetype.includes('document')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Chỉ chấp nhận các định dạng file: PDF, PNG, JPG, JPEG, WEBP, Word (doc/docx)'));
+    }
+  }
+});
+
+router.post('/upload-jd', (req: any, res: any) => {
+  jdUpload.any()(req, res, (err: any) => {
+    if (err) return res.status(400).json({ success: false, message: err.message });
+    const file = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
+    if (!file) return res.status(400).json({ success: false, message: 'Vui lòng chọn tệp JD' });
+
+    syncFileToDist('uploads/jd', file.filename);
+    const publicPath = `/uploads/jd/${file.filename}`;
+    
+    let originalName = file.originalname;
+    try {
+      originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    } catch {
+      originalName = file.originalname;
+    }
+
+    res.json({
+      success: true,
+      url: publicPath,
+      fileUrl: publicPath,
+      filename: file.filename,
+      fileName: file.filename,
+      originalName
+    });
+  });
+});
+
 export default router;

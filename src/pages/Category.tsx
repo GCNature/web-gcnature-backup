@@ -69,33 +69,51 @@ const Category = () => {
     'Kính camera': 'Kính Có Camera',
   };
 
+  const normalizeCategoryName = (name: string): string => {
+    if (!name) return "";
+    return name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[đĐ]/g, "d")
+      .replace(/[^a-zA-Z0-9\s-]/g, " ")
+      .replace(/-/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  };
+
   // Filter products by category
   const filteredProducts = useMemo(() => {
     if (!category) return [];
+    const normTarget = normalizeCategoryName(category.categoryName);
+
     let result = products.filter(p => {
-      // 1. Exact category match
-      if (p.category === category.categoryName) return true;
+      const prodCatRaw = p.category || "";
+      const normProdCat = normalizeCategoryName(prodCatRaw);
 
-      // 2. Alias match
-      const normalized = categoryAliases[p.category];
-      if (normalized === category.categoryName) return true;
+      if (!normProdCat || !normTarget) return false;
 
-      // 3. SKU prefix match
-      const sku = p.sku || p.productId || '';
-      for (const [prefix, cat] of Object.entries(skuPrefixCategory)) {
-        if (sku.startsWith(prefix) && cat === category.categoryName) return true;
+      // 1. Exact match
+      if (normProdCat === normTarget) return true;
+
+      // 2. Explicit slug shorthand mappings
+      if (normTarget === "mat na" && normProdCat.includes("mat na")) return true;
+      if (normTarget === "serum" && normProdCat.includes("serum") && !normProdCat.includes("mat na")) return true;
+      if (normTarget === "kem duong" && normProdCat.includes("kem duong")) return true;
+      if (normTarget === "kem chong nang" && normProdCat.includes("chong nang")) return true;
+
+      // 3. Substring containment match strictly on category field
+      if (normProdCat.includes(normTarget) || normTarget.includes(normProdCat)) {
+        if (normTarget.includes("serum") && normProdCat.includes("mat na")) return false;
+        if (normTarget.includes("mat na") && normProdCat.includes("serum")) return false;
+        return true;
       }
 
-      // 3. Fallback: check if category.categoryName is a parent category in megaMenu (by name or by category query parameter)
-      const parentGroup = megaMenu.find(g => {
-        if (g.name === category.categoryName) return true;
-        const urlParams = new URLSearchParams(g.href.split('?')[1] || "");
-        return urlParams.get("category") === category.categoryName;
-      });
-
+      // 4. Parent group in megaMenu
+      const parentGroup = megaMenu.find(g => normalizeCategoryName(g.name) === normTarget);
       if (parentGroup) {
-        const subCatNames = parentGroup.groups.flatMap(grp => grp.items.map(item => item.name));
-        if (subCatNames.includes(p.category)) return true;
+        const subCatNames = parentGroup.groups.flatMap(grp => grp.items.map(item => normalizeCategoryName(item.name)));
+        if (subCatNames.includes(normProdCat)) return true;
       }
       return false;
     });

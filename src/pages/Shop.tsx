@@ -206,7 +206,7 @@ const Shop = () => {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[đĐ]/g, "d")
-      .replace(/[^a-zA-Z0-9\s-]/g, "")
+      .replace(/[^a-zA-Z0-9\s-]/g, " ")
       .replace(/-/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
@@ -214,32 +214,43 @@ const Shop = () => {
   };
 
   const checkMatchesCategory = (p: any, categoryTitle: string) => {
+    if (!categoryTitle || categoryTitle === 'all') return true;
+
     const normTitle = normalizeCategoryName(categoryTitle);
-    
-    // 1. Exact category match
-    if (normalizeCategoryName(p.category || "") === normTitle) return true;
+    const prodCatRaw = p.category || "";
+    const normProdCat = normalizeCategoryName(prodCatRaw);
 
-    // 2. Alias match (DB uses different name than frontend)
-    const normalizedCategory = categoryAliases[p.category];
-    if (normalizedCategory && normalizeCategoryName(normalizedCategory) === normTitle) return true;
+    if (!normTitle || !normProdCat) return false;
 
-    // 3. SKU prefix match
-    const sku = p.sku || p.productId || '';
-    for (const [prefix, cat] of Object.entries(skuPrefixCategory)) {
-      if (sku.startsWith(prefix) && normalizeCategoryName(cat) === normTitle) return true;
+    // 1. Exact category match after normalization
+    if (normProdCat === normTitle) return true;
+
+    // 2. Explicit slug shorthand mappings (URL slugs -> DB category names)
+    if (normTitle === "mat na" && normProdCat.includes("mat na")) return true;
+    if (normTitle === "serum" && normProdCat.includes("serum") && !normProdCat.includes("mat na")) return true;
+    if (normTitle === "kem duong" && normProdCat.includes("kem duong")) return true;
+    if (normTitle === "kem chong nang" && normProdCat.includes("chong nang")) return true;
+    if (normTitle === "sua rua mat" && normProdCat.includes("sua rua mat")) return true;
+    if (normTitle === "tay trang" && normProdCat.includes("tay trang")) return true;
+
+    // 3. Substring containment match strictly on category field (NOT product name)
+    if (normProdCat.includes(normTitle) || normTitle.includes(normProdCat)) {
+      // Prevent cross-matching between serum and mask
+      if (normTitle.includes("serum") && normProdCat.includes("mat na")) return false;
+      if (normTitle.includes("mat na") && normProdCat.includes("serum")) return false;
+      return true;
     }
 
-    // 4. Fallback: check if categoryTitle is a parent category in megaMenu (by name or by friendly path)
+    // 4. Parent group in megaMenu (e.g., "Chăm sóc da mặt")
     const parentGroup = megaMenu.find(g => {
       if (normalizeCategoryName(g.name) === normTitle) return true;
-      const catVal = g.href.split('/shop/')[1] || "";
+      const catVal = (g.href.split('/shop/')[1] || "").split('?')[0];
       return normalizeCategoryName(catVal) === normTitle;
     });
 
     if (parentGroup) {
-      // Get all subcategory names under this parent category
       const subCatNames = parentGroup.groups.flatMap(grp => grp.items.map(item => normalizeCategoryName(item.name)));
-      if (subCatNames.includes(normalizeCategoryName(p.category || ""))) return true;
+      if (subCatNames.includes(normProdCat)) return true;
     }
 
     return false;

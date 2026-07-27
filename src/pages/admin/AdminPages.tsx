@@ -628,6 +628,62 @@ export default function AdminPages() {
     });
   };
 
+  const handleUploadJdFile = async (jobIndex: number, file: File) => {
+    const allowedExts = /\.(pdf|png|jpg|jpeg|doc|docx|webp)$/i;
+    if (!allowedExts.test(file.name)) {
+      toast.error("Chỉ chấp nhận file định dạng PDF, PNG, JPG, WEBP hoặc Word (doc/docx)");
+      return;
+    }
+    if (file.size > 30 * 1024 * 1024) {
+      toast.error("Dung lượng file tối đa là 30MB");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("jdFile", file);
+    formData.append("file", file);
+
+    toast.info("Đang tải file JD lên...");
+
+    try {
+      const token = localStorage.getItem("token") || "";
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch("/api/admin/upload-jd", {
+        method: "POST",
+        headers,
+        body: formData
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || data.error || "Lỗi tải file JD");
+      }
+
+      const uploadedUrl = data.fileUrl || data.url;
+      const uploadedName = data.originalName || data.fileName || data.filename || file.name;
+
+      setPageContent(prev => {
+        const currentJobs = Array.isArray(prev.tabsConfig) ? [...prev.tabsConfig] : [];
+        if (currentJobs[jobIndex]) {
+          currentJobs[jobIndex] = {
+            ...currentJobs[jobIndex],
+            jdFileUrl: uploadedUrl,
+            jdFileName: uploadedName
+          };
+        }
+        return { ...prev, tabsConfig: currentJobs };
+      });
+
+      toast.success("Tải tệp JD lên thành công!");
+    } catch (err: any) {
+      console.error("Upload JD Error:", err);
+      toast.error(err.message || "Không thể kết nối máy chủ tải file JD");
+    }
+  };
+
   const isDefaultSystemPage = [
     "page_home", "page_about", "page_faq", "page_recruitment", "page_agent_policy", "page_catalog", "page_lucky_wheel",
     "page_policy_mua-hang", "page_policy_bao-mat", "page_policy_thanh-toan"
@@ -1796,7 +1852,8 @@ export default function AdminPages() {
               )}
 
               {/* RENDER ABOUT & RECRUITMENT PAGES VISUALLY */}
-              {(selectedPageKey === "page_about" || selectedPageKey === "page_recruitment") && (
+              {/* RENDER ABOUT PAGE VISUALLY */}
+              {selectedPageKey === "page_about" && (
                 <div className="space-y-6">
                   {/* Banner */}
                   <div className="relative rounded-[2rem] overflow-hidden bg-slate-900 text-white min-h-[180px] flex items-center p-6 md:p-8 border border-slate-800 shadow-md group/about bg-cover bg-center">
@@ -1804,7 +1861,6 @@ export default function AdminPages() {
                       <img src={pageContent.bannerImage} className="absolute inset-0 w-full h-full object-cover opacity-30" alt="" />
                     )}
                     <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 opacity-80" />
-                    {/* ALWAYS AT THE TOP LAYER (z-40) & FLOATING TOP-RIGHT */}
                     <div className="absolute top-4 right-4 z-40 opacity-0 group-hover/about:opacity-100 transition-opacity">
                       <Button
                         type="button"
@@ -1816,7 +1872,7 @@ export default function AdminPages() {
                     </div>
                     <div className="relative z-10 w-full space-y-2">
                       <span className="text-[9px] uppercase font-black tracking-widest text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
-                        {selectedPageKey === "page_about" ? "Banner Trang Giới thiệu (Chỉnh sửa trực quan)" : "Banner Trang Tuyển dụng (Chỉnh sửa trực quan)"}
+                        Banner Trang Giới thiệu (Chỉnh sửa trực quan)
                       </span>
                       <input
                         value={pageContent.title}
@@ -1843,7 +1899,514 @@ export default function AdminPages() {
                     <div className="space-y-6">
                       {pageContent.sections.map((sec, idx) => (
                         <div key={idx} className="relative group bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-3">
-                          {/* Section Controls */}
+                          <div className="absolute right-4 top-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-1 rounded-lg border border-gray-100 shadow-sm z-10">
+                            <Button onClick={() => handleMoveSection(idx, 'up')} disabled={idx === 0} variant="ghost" size="icon" className="h-7 w-7"><ArrowUp className="w-3.5 h-3.5" /></Button>
+                            <Button onClick={() => handleMoveSection(idx, 'down')} disabled={idx === pageContent.sections.length - 1} variant="ghost" size="icon" className="h-7 w-7"><ArrowDown className="w-3.5 h-3.5" /></Button>
+                            <Button onClick={() => handleRemoveSection(idx)} variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"><Trash2 className="w-3.5 h-3.5" /></Button>
+                          </div>
+                          <input
+                            value={sec.title}
+                            onChange={(e) => handleSectionChange(idx, 'title', e.target.value)}
+                            className={`${editInputClass} font-bold text-gray-900 text-sm md:text-base`}
+                            placeholder="Tiêu đề mục..."
+                          />
+                          <textarea
+                            value={sec.content}
+                            onChange={(e) => handleSectionChange(idx, 'content', e.target.value)}
+                            className={`${editTextAreaClass} text-gray-600 text-xs md:text-sm`}
+                            rows={4}
+                            placeholder="Nội dung chi tiết..."
+                          />
+                        </div>
+                      ))}
+                      
+                      <div className="text-center pt-2">
+                        <Button
+                          onClick={() => handleAddSection({ title: "Mục mới", content: "Nội dung mới..." })}
+                          variant="outline"
+                          className="border-dashed border-gray-300 text-gray-600"
+                        >
+                          + Thêm phần nội dung
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* RENDER RECRUITMENT PAGE WITH JD FILE ATTACHMENT MANAGER */}
+              {selectedPageKey === "page_recruitment" && (
+                <div className="space-y-6">
+                  {/* Banner Editor */}
+                  <div className="relative rounded-[2rem] overflow-hidden bg-slate-900 text-white min-h-[180px] flex items-center p-6 md:p-8 border border-slate-800 shadow-md group/recruitment bg-cover bg-center">
+                    {pageContent.bannerImage && (
+                      <img src={pageContent.bannerImage} className="absolute inset-0 w-full h-full object-cover opacity-30" alt="" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 opacity-80" />
+                    <div className="absolute top-4 right-4 z-40 opacity-0 group-hover/recruitment:opacity-100 transition-opacity">
+                      <Button
+                        type="button"
+                        onClick={() => openImagePicker((url) => setPageContent({ ...pageContent, bannerImage: url }))}
+                        className="bg-white hover:bg-slate-50 text-slate-950 font-bold text-xs gap-1.5 px-4 py-2.5 rounded-xl shadow-md border border-slate-100"
+                      >
+                        <Camera className="w-4 h-4 text-slate-600" /> Thay ảnh Banner
+                      </Button>
+                    </div>
+                    <div className="relative z-10 w-full space-y-2">
+                      <span className="text-[9px] uppercase font-black tracking-widest text-teal-300 bg-teal-900/60 px-3 py-1 rounded-full border border-teal-500/30">
+                        Banner Trang Tuyển dụng (Chỉnh sửa trực quan)
+                      </span>
+                      <input
+                        value={pageContent.title}
+                        onChange={(e) => setPageContent({ ...pageContent, title: e.target.value })}
+                        className={`${editInputClass} text-xl md:text-3xl font-black text-white`}
+                        placeholder="GC Nature Tuyển Dụng"
+                      />
+                      <textarea
+                        value={pageContent.desc}
+                        onChange={(e) => setPageContent({ ...pageContent, desc: e.target.value })}
+                        className={`${editTextAreaClass} text-xs md:text-sm text-slate-300`}
+                        placeholder="Gia nhập nhà GC Nature chúng mình để cùng sáng tạo những ý tưởng độc đáo nhé!"
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 💼 QUẢN LÝ CÁC VỊ TRÍ TUYỂN DỤNG & TỆP JD */}
+                  <div className="bg-white rounded-[2rem] border border-teal-100 p-6 md:p-8 shadow-sm space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-teal-50 p-2.5 rounded-xl text-teal-600">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h3 className="font-extrabold text-gray-900 text-base flex items-center gap-2">
+                            Các Vị Trí Tuyển Dụng & Đính Kèm Tệp JD (PDF / PNG / JPG / Word)
+                          </h3>
+                          <p className="text-xs text-gray-400">
+                            Thêm vị trí tuyển dụng, gán phòng ban, và đính kèm file JD để ứng viên tải hoặc xem trực tiếp
+                          </p>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          const currentJobs = Array.isArray(pageContent.tabsConfig) ? pageContent.tabsConfig : [];
+                          const newJob = {
+                            id: `job-${Date.now()}`,
+                            title: `Vị trí tuyển dụng mới ${currentJobs.length + 1}`,
+                            department: 'marketing',
+                            departmentName: 'Marketing',
+                            location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+                            type: 'Ca linh hoạt / Toàn thời gian',
+                            excerpt: 'Mô tả ngắn gọn công việc...',
+                            jdFileUrl: '',
+                            jdFileName: '',
+                            contentHtml: '<p>Chi tiết mô tả công việc, yêu cầu ứng viên và quyền lợi...</p>',
+                            isActive: true
+                          };
+                          setPageContent({
+                            ...pageContent,
+                            tabsConfig: [...currentJobs, newJob]
+                          });
+                          toast.success("Đã thêm vị trí tuyển dụng mới!");
+                        }}
+                        className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs gap-1.5 px-4 py-2.5 rounded-xl shadow-md shrink-0"
+                      >
+                        <Plus className="w-4 h-4" /> + Thêm Vị Trí Tuyển Dụng Mới
+                      </Button>
+                    </div>
+
+                    {/* Render List of Job Positions */}
+                    {(() => {
+                      const jobs = Array.isArray(pageContent.tabsConfig) && pageContent.tabsConfig.length > 0
+                        ? pageContent.tabsConfig
+                        : [
+                            {
+                              id: 'job-1',
+                              title: 'Thực tập sinh Thương mại điện tử (E-commerce Intern)',
+                              department: 'ecom',
+                              departmentName: 'TMĐT',
+                              location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+                              type: 'Ca linh hoạt / Toàn thời gian',
+                              excerpt: 'Đam mê và am hiểu vận hành gian hàng Shopee, TikTok Shop, Lazada. Tham gia chương trình flashsale & tối ưu doanh số...',
+                              jdFileUrl: '',
+                              jdFileName: '',
+                              contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Hỗ trợ đăng tải sản phẩm, thiết kế giao diện gian hàng Shopee/TikTok Shop.</p><p>- Theo dõi đơn hàng, tương tác khách hàng & hỗ trợ livestream.</p><h3>2. YÊU CẦU ỨNG VIÊN</h3><p>- Đam mê ngành hàng Mỹ phẩm Skincare Hàn Quốc.</p><p>- Nhanh nhẹn, có tinh thần học hỏi cao.</p><h3>3. QUYỀN LỢI & THƯỞNG</h3><p>- Lương trợ cấp + Thưởng doanh số hấp dẫn.</p><p>- Được đào tạo bài bản 1-on-1 từ Trưởng phòng E-Commerce.</p>',
+                              isActive: true
+                            },
+                            {
+                              id: 'job-2',
+                              title: 'Thực tập sinh SEO Websites',
+                              department: 'seo',
+                              departmentName: 'SEO',
+                              location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+                              type: 'Ca linh hoạt / Toàn thời gian',
+                              excerpt: 'Tối ưu bài viết chuẩn SEO, lên bộ từ khóa ngành mỹ phẩm Hàn Quốc, kiểm tra backlink và thứ hạng Google...',
+                              jdFileUrl: '',
+                              jdFileName: '',
+                              contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Viết bài chuẩn SEO tối ưu Onpage trên website GCnature.</p><p>- Nghiên cứu từ khóa xu hướng làm đẹp Hàn Quốc.</p><h3>2. QUYỀN LỢI</h3><p>- Hỗ trợ dấu thực tập & phụ cấp xứng đáng.</p>',
+                              isActive: true
+                            },
+                            {
+                              id: 'job-3',
+                              title: 'Thực tập sinh Marketing / Content',
+                              department: 'marketing',
+                              departmentName: 'Marketing',
+                              location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+                              type: 'Ca linh hoạt / Toàn thời gian',
+                              excerpt: 'Sáng tạo nội dung Fanpage, TikTok, thiết kế banner và kịch bản truyền thông mỹ phẩm...',
+                              jdFileUrl: '',
+                              jdFileName: '',
+                              contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Lên kịch bản video ngắn TikTok/Reels về chăm sóc da.</p><p>- Viết nội dung bài đăng Fanpage Facebook & Instagram.</p>',
+                              isActive: true
+                            },
+                            {
+                              id: 'job-4',
+                              title: 'Thực tập sinh Truyền thông & Thương hiệu',
+                              department: 'media',
+                              departmentName: 'Truyền thông',
+                              location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+                              type: 'Ca linh hoạt / Toàn thời gian',
+                              excerpt: 'Kết nối KOC/KOL làm đẹp, gửi mẫu trải nghiệm sản phẩm, hỗ trợ PR sự kiện thương hiệu...',
+                              jdFileUrl: '',
+                              jdFileName: '',
+                              contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Tìm kiếm & đàm phán hợp tác với KOL/KOC trong lĩnh vực Mỹ phẩm.</p>',
+                              isActive: true
+                            },
+                            {
+                              id: 'job-5',
+                              title: 'Thực tập sinh Livestream TikTok / Shopee',
+                              department: 'livestream',
+                              departmentName: 'Livestream',
+                              location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+                              type: 'Ca linh hoạt / Toàn thời gian',
+                              excerpt: 'Đứng phiên live bán hàng mỹ phẩm Hàn Quốc, ghim deal flashsale, tương tác với người xem...',
+                              jdFileUrl: '',
+                              jdFileName: '',
+                              contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Trực tiếp livestream tư vấn sản phẩm chăm sóc da GC Nature.</p>',
+                              isActive: true
+                            },
+                            {
+                              id: 'job-6',
+                              title: 'Nhân viên Video Editor (Chính thức)',
+                              department: 'editor',
+                              departmentName: 'Video Editor',
+                              location: 'S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội',
+                              type: 'Toàn thời gian (Full-time)',
+                              excerpt: 'Quay dựng video ngắn TikTok/Reels/Shorts, biên tập âm thanh & hiệu ứng bắt mắt cho sản phẩm...',
+                              jdFileUrl: '',
+                              jdFileName: '',
+                              contentHtml: '<h3>1. MÔ TẢ CÔNG VIỆC</h3><p>- Quay phim và cắt dựng video trải nghiệm sản phẩm mỹ phẩm Hàn Quốc.</p>',
+                              isActive: true
+                            }
+                          ];
+
+                      const updateJob = (idx: number, field: string, value: any) => {
+                        const updated = [...jobs];
+                        updated[idx] = { ...updated[idx], [field]: value };
+                        setPageContent({ ...pageContent, tabsConfig: updated });
+                      };
+
+                      const deleteJob = (idx: number) => {
+                        const updated = jobs.filter((_, i) => i !== idx);
+                        setPageContent({ ...pageContent, tabsConfig: updated });
+                        toast.success("Đã xóa vị trí tuyển dụng!");
+                      };
+
+                      const moveJob = (idx: number, dir: 'up' | 'down') => {
+                        const updated = [...jobs];
+                        const targetIdx = dir === 'up' ? idx - 1 : idx + 1;
+                        if (targetIdx < 0 || targetIdx >= updated.length) return;
+                        const temp = updated[idx];
+                        updated[idx] = updated[targetIdx];
+                        updated[targetIdx] = temp;
+                        setPageContent({ ...pageContent, tabsConfig: updated });
+                      };
+
+                      const handleUploadJdFile = async (idx: number, file: File) => {
+                        const toastId = toast.loading("Đang tải tệp JD...");
+                        try {
+                          const formData = new FormData();
+                          formData.append("jdFile", file);
+                          const token = localStorage.getItem("token") || "";
+                          const headers: Record<string, string> = {};
+                          if (token) headers["Authorization"] = `Bearer ${token}`;
+
+                          const res = await fetch("/api/admin/upload-jd", {
+                            method: "POST",
+                            headers,
+                            body: formData
+                          });
+
+                          const data = await res.json();
+                          if (data.success && data.url) {
+                            updateJob(idx, "jdFileUrl", data.url);
+                            updateJob(idx, "jdFileName", data.originalName || file.name);
+                            toast.success("Đã tải tệp JD thành công!", { id: toastId });
+                          } else {
+                            toast.error(data.message || "Tải tệp JD thất bại", { id: toastId });
+                          }
+                        } catch (err: any) {
+                          console.error("Upload JD error:", err);
+                          toast.error("Lỗi kết nối tải tệp JD", { id: toastId });
+                        }
+                      };
+
+                      return (
+                        <div className="space-y-6">
+                          {jobs.map((job: any, idx: number) => (
+                            <div
+                              key={job.id || idx}
+                              className={`p-6 rounded-2xl border transition-all space-y-4 relative group ${
+                                job.isActive !== false
+                                  ? "bg-gray-50/70 border-gray-200 hover:border-teal-300"
+                                  : "bg-gray-100/50 border-gray-200 opacity-60"
+                              }`}
+                            >
+                              {/* Job Item Control Bar */}
+                              <div className="flex items-center justify-between border-b border-gray-200/80 pb-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-7 h-7 rounded-lg bg-teal-600 text-white font-extrabold text-xs flex items-center justify-center">
+                                    {idx + 1}
+                                  </span>
+                                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    Vị trí #{idx + 1}
+                                  </span>
+                                  {job.jdFileUrl && (
+                                    <span className="text-[10px] font-extrabold bg-teal-100 text-teal-800 border border-teal-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                      📄 Đã đính kèm file JD
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1.5">
+                                  <Button
+                                    type="button"
+                                    onClick={() => moveJob(idx, 'up')}
+                                    disabled={idx === 0}
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                  >
+                                    <ArrowUp className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    onClick={() => moveJob(idx, 'down')}
+                                    disabled={idx === jobs.length - 1}
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                  >
+                                    <ArrowDown className="w-3.5 h-3.5" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    onClick={() => updateJob(idx, 'isActive', job.isActive === false ? true : false)}
+                                    variant="outline"
+                                    className={`h-7 text-[10px] font-bold px-2 rounded-lg ${
+                                      job.isActive !== false ? "text-emerald-700 border-emerald-200 bg-emerald-50" : "text-gray-500 border-gray-300"
+                                    }`}
+                                  >
+                                    {job.isActive !== false ? "Đang hiển thị" : "Đã ẩn"}
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    onClick={() => deleteJob(idx)}
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+
+                              {/* Form Inputs Grid */}
+                              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                                {/* Title */}
+                                <div className="md:col-span-8 space-y-1">
+                                  <Label className="text-xs font-bold text-gray-700">Tên vị trí tuyển dụng</Label>
+                                  <Input
+                                    value={job.title || ""}
+                                    onChange={(e) => updateJob(idx, "title", e.target.value)}
+                                    placeholder="Ví dụ: Thực tập sinh E-Commerce"
+                                    className="bg-white border-gray-200 text-sm font-bold"
+                                  />
+                                </div>
+
+                                {/* Department Category Dropdown */}
+                                <div className="md:col-span-4 space-y-1">
+                                  <Label className="text-xs font-bold text-gray-700">Phòng ban / Danh mục Filter</Label>
+                                  <select
+                                    value={job.department || "ecom"}
+                                    onChange={(e) => {
+                                      const deptKey = e.target.value;
+                                      const deptNames: Record<string, string> = {
+                                        ecom: 'TMĐT',
+                                        seo: 'SEO',
+                                        marketing: 'Marketing',
+                                        media: 'Truyền thông',
+                                        livestream: 'Livestream',
+                                        editor: 'Video Editor',
+                                        other: 'Khác'
+                                      };
+                                      updateJob(idx, "department", deptKey);
+                                      updateJob(idx, "departmentName", deptNames[deptKey] || deptKey);
+                                    }}
+                                    className="w-full text-xs font-bold border border-gray-200 rounded-lg p-2.5 bg-white text-gray-800"
+                                  >
+                                    <option value="ecom">TMĐT (E-commerce)</option>
+                                    <option value="seo">SEO Websites</option>
+                                    <option value="marketing">Marketing & Content</option>
+                                    <option value="media">Truyền thông & KOLs</option>
+                                    <option value="livestream">Livestream TikTok/Shopee</option>
+                                    <option value="editor">Video Editor (Quay dựng)</option>
+                                    <option value="other">Vị trí khác</option>
+                                  </select>
+                                </div>
+
+                                {/* Location & Work Type */}
+                                <div className="md:col-span-6 space-y-1">
+                                  <Label className="text-xs font-bold text-gray-700">Địa điểm làm việc</Label>
+                                  <Input
+                                    value={job.location || ""}
+                                    onChange={(e) => updateJob(idx, "location", e.target.value)}
+                                    placeholder="Ví dụ: S1.06 Vinsmart City & 111 Phố Trung Phụng, Hà Nội"
+                                    className="bg-white border-gray-200 text-xs"
+                                  />
+                                </div>
+
+                                <div className="md:col-span-6 space-y-1">
+                                  <Label className="text-xs font-bold text-gray-700">Hình thức làm việc</Label>
+                                  <Input
+                                    value={job.type || ""}
+                                    onChange={(e) => updateJob(idx, "type", e.target.value)}
+                                    placeholder="Ví dụ: Ca linh hoạt / Full-time"
+                                    className="bg-white border-gray-200 text-xs"
+                                  />
+                                </div>
+
+                                {/* Excerpt */}
+                                <div className="md:col-span-12 space-y-1">
+                                  <Label className="text-xs font-bold text-gray-700">Mô tả vắn tắt vị trí (Excerpt)</Label>
+                                  <textarea
+                                    value={job.excerpt || ""}
+                                    onChange={(e) => updateJob(idx, "excerpt", e.target.value)}
+                                    rows={2}
+                                    placeholder="Nêu tóm tắt ngắn về trách nhiệm & mong muốn cho vị trí này..."
+                                    className="w-full text-xs border border-gray-200 rounded-lg p-2.5 bg-white text-gray-700"
+                                  />
+                                </div>
+
+                                {/* Attachment Upload Area */}
+                                <div className="md:col-span-12 space-y-2 bg-teal-50/50 p-4 rounded-xl border border-teal-100">
+                                  <Label className="text-xs font-extrabold text-teal-900 flex items-center justify-between">
+                                    <span className="flex items-center gap-1.5">
+                                      <Upload className="w-4 h-4 text-teal-600" /> Tệp JD Đính Kèm (PDF / PNG / JPG / WORD)
+                                    </span>
+                                    {job.jdFileUrl && (
+                                      <a
+                                        href={job.jdFileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-[11px] font-bold text-teal-700 hover:underline flex items-center gap-1"
+                                      >
+                                        <Eye className="w-3.5 h-3.5" /> Xem file hiện tại
+                                      </a>
+                                    )}
+                                  </Label>
+
+                                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                                    <div className="flex-1 border-2 border-dashed border-teal-200 hover:border-teal-500 rounded-xl p-3 bg-white text-center relative cursor-pointer transition-all">
+                                      <input
+                                        type="file"
+                                        onChange={(e) => {
+                                          if (e.target.files?.[0]) {
+                                            handleUploadJdFile(idx, e.target.files[0]);
+                                          }
+                                        }}
+                                        accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.webp"
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                      />
+                                      <div className="text-xs font-semibold text-teal-800 flex items-center justify-center gap-2">
+                                        <Upload className="w-4 h-4 text-teal-600" />
+                                        <span>Click hoặc kéo thả file JD (.pdf, .png, .jpg, .docx)</span>
+                                      </div>
+                                    </div>
+
+                                    <Button
+                                      type="button"
+                                      onClick={() => {
+                                        openImagePicker((url) => {
+                                          updateJob(idx, "jdFileUrl", url);
+                                          updateJob(idx, "jdFileName", url.split('/').pop() || 'Tệp JD');
+                                        });
+                                      }}
+                                      variant="outline"
+                                      className="text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border-slate-200 shrink-0 h-11"
+                                    >
+                                      <ImageIcon className="w-4 h-4 text-slate-500 mr-1.5" /> Chọn từ Kho ảnh
+                                    </Button>
+
+                                    {job.jdFileUrl && (
+                                      <Button
+                                        type="button"
+                                        onClick={() => {
+                                          updateJob(idx, "jdFileUrl", "");
+                                          updateJob(idx, "jdFileName", "");
+                                          toast.success("Đã gỡ file JD!");
+                                        }}
+                                        variant="ghost"
+                                        className="text-xs font-bold text-red-600 hover:bg-red-50 shrink-0 h-11"
+                                      >
+                                        <Trash2 className="w-4 h-4 mr-1" /> Gỡ File JD
+                                      </Button>
+                                    )}
+                                  </div>
+
+                                  {job.jdFileUrl && (
+                                    <div className="p-2.5 bg-white rounded-lg border border-teal-200 text-xs font-medium text-teal-900 flex items-center justify-between">
+                                      <span className="truncate flex items-center gap-1.5">
+                                        📄 <strong>Đã đính kèm:</strong> {job.jdFileName || job.jdFileUrl}
+                                      </span>
+                                      <span className="text-[10px] bg-teal-100 text-teal-800 font-extrabold px-2 py-0.5 rounded uppercase shrink-0">
+                                        {job.jdFileUrl.split('.').pop()?.toUpperCase() || 'FILE'}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Rich Text HTML Job Detail Content */}
+                                <div className="md:col-span-12 space-y-1">
+                                  <Label className="text-xs font-bold text-gray-700">Mô tả JD chi tiết (HTML / Văn bản)</Label>
+                                  <textarea
+                                    value={job.contentHtml || ""}
+                                    onChange={(e) => updateJob(idx, "contentHtml", e.target.value)}
+                                    rows={4}
+                                    placeholder="Nhiệm vụ chi tiết, yêu cầu trình độ, quyền lợi & mức thưởng..."
+                                    className="w-full text-xs border border-gray-200 rounded-lg p-2.5 bg-white text-gray-700 font-mono"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Sections List */}
+                  <div className="bg-white rounded-[2rem] border border-gray-150 p-6 md:p-8 shadow-sm space-y-6">
+                    <div className="flex items-center gap-2 border-b border-gray-100 pb-3">
+                      <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full uppercase">Các khối văn bản bổ sung</span>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      {pageContent.sections.map((sec, idx) => (
+                        <div key={idx} className="relative group bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-3">
                           <div className="absolute right-4 top-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-1 rounded-lg border border-gray-100 shadow-sm z-10">
                             <Button onClick={() => handleMoveSection(idx, 'up')} disabled={idx === 0} variant="ghost" size="icon" className="h-7 w-7"><ArrowUp className="w-3.5 h-3.5" /></Button>
                             <Button onClick={() => handleMoveSection(idx, 'down')} disabled={idx === pageContent.sections.length - 1} variant="ghost" size="icon" className="h-7 w-7"><ArrowDown className="w-3.5 h-3.5" /></Button>

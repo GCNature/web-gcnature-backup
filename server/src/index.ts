@@ -4,7 +4,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
-import fs from 'fs';
 import authRoutes from './routes/auth';
 import adminRoutes from './routes/admin';
 import orderRoutes from './routes/orders';
@@ -106,19 +105,14 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Sitemap XML route
-app.get('/sitemap.xml', (req, res) => {
-  const sitemapPath = path.resolve(__dirname, '../../dist/sitemap.xml');
-  const fallbackPath = path.resolve(__dirname, '../../public/sitemap.xml');
-  if (fs.existsSync(sitemapPath)) {
-    res.header('Content-Type', 'application/xml');
-    return res.sendFile(sitemapPath);
-  } else if (fs.existsSync(fallbackPath)) {
-    res.header('Content-Type', 'application/xml');
-    return res.sendFile(fallbackPath);
-  }
-  res.status(404).send('Sitemap not found');
-});
+// In production, serve the React build from the project root /dist directory.
+// server/src/index.ts -> server/src -> server -> project root -> dist
+const clientDistPath = path.resolve(__dirname, '../../dist');
+const publicPath = path.resolve(__dirname, '../../public');
+app.use(express.static(clientDistPath));
+app.use(express.static(publicPath)); // Serve uploaded banners from public/
+app.use('/avatars', express.static(path.resolve(__dirname, '../../public/avatars'))); // Explicit avatars route
+app.use('/api/avatars', express.static(path.resolve(__dirname, '../../public/avatars'))); // Serve via API path for production reverse proxy bypass
 
 // Google Shopping Feed redirect helper
 app.get('/google-feed.xml', (req, res) => {
@@ -129,14 +123,6 @@ app.get('/google-feed.xml', (req, res) => {
 app.get('/google-promotions.xml', (req, res) => {
   res.redirect('/api/products/google-promotions');
 });
-
-// In production, serve the React build from the project root /dist directory.
-const clientDistPath = path.resolve(__dirname, '../../dist');
-const publicPath = path.resolve(__dirname, '../../public');
-app.use(express.static(clientDistPath));
-app.use(express.static(publicPath));
-app.use('/avatars', express.static(path.resolve(__dirname, '../../public/avatars')));
-app.use('/api/avatars', express.static(path.resolve(__dirname, '../../public/avatars')));
 
 // React Router fallback for non-API routes such as /login, /shop, /admin.
 app.get(/^\/(?!api).*/, (req, res) => {

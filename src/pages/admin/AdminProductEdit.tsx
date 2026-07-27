@@ -202,6 +202,9 @@ export default function AdminProductEdit() {
                 campaignPrice: fb.campaignPrice || 0,
                 offPlatformPrice: fb.offPlatformPrice || 0,
                 warrantyData: fb.warrantyData || "",
+                origin: fb.origin || "",
+                volume: fb.volume || "",
+                ingredients: fb.ingredients || "",
                 images: formattedImages,
                 specs: fb.specs || [],
                 variants: fb.variants || [],
@@ -273,6 +276,8 @@ export default function AdminProductEdit() {
         offPlatformPrice: product.offPlatformPrice,
         warrantyData: product.warrantyData,
         origin: product.origin,
+        volume: product.volume,
+        ingredients: product.ingredients,
         productId: product.productId,
         images: product.images,
         specs: product.specs,
@@ -937,11 +942,62 @@ export default function AdminProductEdit() {
               </CardContent>
             </Card>
 
+            {/* Thành phần đặc biệt & Hoạt chất Hot (Nổi bật giao diện người dùng - Đúng phần khoanh đỏ Admin Screenshot 2) */}
+            <Card className="border-emerald-200 bg-emerald-50/20 lg:col-span-2 shadow-2xs">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-bold text-emerald-800 flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    🔥 Thành phần đặc biệt & Hoạt chất Hot (Bổ sung nổi bật giao diện người dùng)
+                  </span>
+                  <span className="text-[11px] font-normal text-emerald-700 bg-emerald-100/90 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                    Sẽ hiển thị dạng ô màu xanh lá nổi bật kèm chấm vàng trên giao diện khách hàng
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Input
+                  value={product.featuresEn || ""}
+                  onChange={(e) => update("featuresEn", e.target.value)}
+                  placeholder="Nhập tên các hoạt chất HOT cần bổ sung nổi bật (phân cách bằng dấu phẩy, ví dụ: Niacinamide, Panthenol, Madecassoside, Hydrolyzed Hyaluronic Acid...)"
+                  className="bg-white border-emerald-300 font-semibold text-emerald-950 focus:border-emerald-500"
+                />
+                
+                {/* Preset Quick Add Buttons */}
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-xs font-bold text-emerald-900 block">Bấm để thêm nhanh hoạt chất Hot:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      "Niacinamide", "Panthenol", "Madecassoside", "Asiaticoside",
+                      "Hyaluronic Acid", "Hydrolyzed Hyaluronic Acid", "PDRN DNA Cá Hồi",
+                      "Ascorbic Acid (Vitamin C)", "Glutathione", "Keo Ong", "Snail Secretion Filtrate (Ốc Sên)",
+                      "Beta-Glucan", "Tocopherol (Vitamin E)", "Centella Asiatica"
+                    ].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => {
+                          const current = (product.featuresEn || "").split(',').map(s => s.trim()).filter(Boolean);
+                          if (!current.includes(preset)) {
+                            const updatedList = [...current, preset].join(', ');
+                            update("featuresEn", updatedList);
+                            toast.success(`Đã thêm hoạt chất hot: ${preset}`);
+                          }
+                        }}
+                        className="text-[11px] font-semibold bg-white hover:bg-emerald-100 text-emerald-900 px-2.5 py-1 rounded-md border border-emerald-200 shadow-2xs transition-colors"
+                      >
+                        + {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Thành phần chính (Ingredients) */}
             <Card className="border-border lg:col-span-2">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold text-emerald-700 flex items-center gap-1.5">
-                  🌿 Thành phần chính
+                  🌿 Thành phần chính (Bảng thành phần đầy đủ INCI Standard)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -950,7 +1006,7 @@ export default function AdminProductEdit() {
                   onChange={(e) => update("ingredients", e.target.value)}
                   rows={6}
                   className="w-full rounded-lg border border-border bg-background p-3 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  placeholder="Nhập thành phần chính của sản phẩm (Hiển thị trực tiếp ở phần Công dụng nổi bật ở phía dưới giao diện người dùng)..."
+                  placeholder="Nhập bảng thành phần chính đầy đủ (INCI Standard) phân cách bởi dấu phẩy..."
                 />
               </CardContent>
             </Card>

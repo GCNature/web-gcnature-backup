@@ -252,14 +252,10 @@ const ProductDetail = () => {
   };
 
   const getPolicyItems = () => {
-    const rawText = product?.footerInfo || globalPolicy;
-    if (rawText) {
-      return parsePolicyText(rawText);
-    }
     return [
-      { icon: ShieldCheck, text: "Cam kết chính hãng", color: "text-emerald-600 bg-emerald-50", iconColor: "text-emerald-600" },
+      { icon: ShieldCheck, text: "Chính hãng Hàn Quốc", color: "text-emerald-600 bg-emerald-50", iconColor: "text-emerald-600" },
       { icon: Headphones, text: "Tư vấn 24/7", color: "text-violet-600 bg-violet-50", iconColor: "text-violet-600" },
-      { icon: Globe, text: "Nhập khẩu chính hãng Hàn Quốc", color: "text-indigo-600 bg-indigo-50", iconColor: "text-indigo-600" },
+      { icon: Gift, text: "Quà tặng hấp dẫn", color: "text-amber-600 bg-amber-50", iconColor: "text-amber-600" },
     ];
   };
 
@@ -936,39 +932,24 @@ const ProductDetail = () => {
           <div className="p-6 md:p-8">
             {activeTab === "info" && (
               <div className="space-y-6">
-                {/* Highlight Attribute Cards Grid */}
+                {/* Summary Specs Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {product.volume && (
-                    <div className="bg-gradient-to-br from-teal-50/90 to-emerald-50/40 p-4 rounded-2xl border border-teal-100/80 flex items-center gap-3.5 shadow-2xs">
-                      <div className="w-11 h-11 rounded-2xl bg-teal-600 text-white flex items-center justify-center text-xl font-bold shadow-sm shrink-0">
-                        🧪
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="text-[11px] font-bold text-teal-800/80 uppercase tracking-wider">Định lượng / Dung tích</p>
-                        <p className="text-base font-extrabold text-teal-950 tracking-tight">{product.volume}</p>
-                      </div>
+                    <div className="bg-gradient-to-br from-teal-50/90 to-emerald-50/40 p-4 rounded-2xl border border-teal-100/80 shadow-2xs">
+                      <p className="text-[11px] font-bold text-teal-800/80 uppercase tracking-wider">Định lượng / Dung tích</p>
+                      <p className="text-base font-extrabold text-teal-950 tracking-tight mt-0.5">{product.volume}</p>
                     </div>
                   )}
                   {product.origin && (
-                    <div className="bg-gradient-to-br from-blue-50/90 to-indigo-50/40 p-4 rounded-2xl border border-blue-100/80 flex items-center gap-3.5 shadow-2xs">
-                      <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl font-bold shadow-sm shrink-0">
-                        🌐
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="text-[11px] font-bold text-blue-800/80 uppercase tracking-wider">Nguồn gốc xuất xứ</p>
-                        <p className="text-base font-extrabold text-blue-950 tracking-tight">{product.origin}</p>
-                      </div>
+                    <div className="bg-gradient-to-br from-blue-50/90 to-indigo-50/40 p-4 rounded-2xl border border-blue-100/80 shadow-2xs">
+                      <p className="text-[11px] font-bold text-blue-800/80 uppercase tracking-wider">Nguồn gốc xuất xứ</p>
+                      <p className="text-base font-extrabold text-blue-950 tracking-tight mt-0.5">{product.origin}</p>
                     </div>
                   )}
                   {product.brand && (
-                    <div className="bg-gradient-to-br from-slate-50 to-gray-100/60 p-4 rounded-2xl border border-slate-200/80 flex items-center gap-3.5 shadow-2xs">
-                      <div className="w-11 h-11 rounded-2xl bg-slate-800 text-white flex items-center justify-center text-xl font-bold shadow-sm shrink-0">
-                        ✨
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Thương hiệu chính hãng</p>
-                        <p className="text-base font-extrabold text-slate-900 tracking-tight">{product.brand}</p>
-                      </div>
+                    <div className="bg-gradient-to-br from-slate-50 to-gray-100/60 p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Thương hiệu chính hãng</p>
+                      <p className="text-base font-extrabold text-slate-900 tracking-tight mt-0.5">{product.brand}</p>
                     </div>
                   )}
                 </div>
@@ -977,12 +958,12 @@ const ProductDetail = () => {
                 {product.featuresVn && (
                   <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-2xs space-y-4">
                     <div className="flex items-center gap-3 pb-3.5 border-b border-slate-100">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-base">
+                      <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-base">
                         ✨
                       </div>
                       <div>
                         <h3 className="text-base font-extrabold text-slate-900 tracking-tight">Công dụng nổi bật</h3>
-                        <p className="text-xs text-slate-500">Hiệu quả chăm sóc da vượt trội từ công thức độc quyền</p>
+                        <p className="text-xs text-slate-500">Hiệu quả chăm sóc da vượt trội từ công thức độc quyền Hàn Quốc</p>
                       </div>
                     </div>
                     <div className="text-slate-700 leading-relaxed text-sm md:text-[15px] space-y-2.5 font-normal">
@@ -990,7 +971,7 @@ const ProductDetail = () => {
                         const trimmed = line.trim();
                         if (!trimmed) return null;
                         return (
-                          <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/60 border border-slate-100/80 hover:bg-slate-50 transition-colors">
+                          <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50/70 border border-slate-100/90 hover:bg-slate-50 transition-colors">
                             <span className="text-teal-600 font-bold shrink-0 mt-0.5">✓</span>
                             <span className="leading-snug">{trimmed.replace(/^(\?\?|🌿|💧|🔒|🌸|✅|⚡|\?|•|-|\*)\s*/, '')}</span>
                           </div>
@@ -1000,45 +981,56 @@ const ProductDetail = () => {
                   </div>
                 )}
 
-                {/* Ingredients Box (Bảng thành phần chính) */}
-                {product.ingredients && (
-                  <div className="bg-emerald-50/30 rounded-2xl border border-emerald-100 p-6 space-y-5">
-                    <div className="flex items-center gap-3 pb-3.5 border-b border-emerald-100">
-                      <div className="w-8 h-8 rounded-xl bg-emerald-600/10 text-emerald-700 flex items-center justify-center font-bold text-base">
-                        🌿
-                      </div>
-                      <div>
-                        <h3 className="text-base font-extrabold text-emerald-950 tracking-tight">Bảng thành phần chính</h3>
-                        <p className="text-xs text-emerald-700 font-medium">Chiết xuất thiên nhiên an toàn & dược mỹ phẩm Hàn Quốc</p>
+                {/* Ingredients Box (THÀNH PHẦN NỔI BẬT & BẢNG THÀNH PHẦN CHI TIẾT ĐẦY ĐỦ) */}
+                {(product.ingredients || product.featuresEn) && (
+                  <div className="bg-white rounded-2xl border border-emerald-100/90 p-6 space-y-6 shadow-2xs">
+                    {/* 1. THÀNH PHẦN NỔI BẬT */}
+                    <div className="space-y-3">
+                      <h3 className="text-xs md:text-sm font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
+                        THÀNH PHẦN NỔI BẬT:
+                      </h3>
+                      
+                      <div className="flex flex-wrap gap-2.5">
+                        {(() => {
+                          const hotAdminRaw = product.featuresEn || "";
+                          let featuredList: string[] = [];
+
+                          if (hotAdminRaw.trim().length > 0) {
+                            // Display ONLY the exact hot/featured ingredients added by admin
+                            featuredList = hotAdminRaw.split(',').map(s => s.trim()).filter(Boolean);
+                          } else if (product.ingredients) {
+                            // Fallback: pick hot ingredients from full INCI string
+                            const allIngredients = product.ingredients.split(',').map(s => s.trim()).filter(Boolean);
+                            const hotKeywords = ["niacinamide", "panthenol", "madecassoside", "asiaticoside", "hyaluronic", "hydrolyzed hyaluronic", "pdrn", "dna", "glutathione", "cica", "vitamin c", "propolis", "snail", "beta-glucan", "adenosine", "centella", "lactobacillus", "allantoin"];
+                            featuredList = allIngredients.filter(ing => hotKeywords.some(k => ing.toLowerCase().includes(k)));
+                          }
+
+                          if (featuredList.length === 0) return null;
+
+                          return featuredList.map((ing, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-2 text-xs md:text-sm px-4 py-2 rounded-full transition-all border bg-emerald-100/90 border-emerald-300 text-emerald-950 font-extrabold shadow-2xs ring-2 ring-emerald-500/20"
+                            >
+                              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                              {ing}
+                            </span>
+                          ));
+                        })()}
                       </div>
                     </div>
 
-                    {/* Key active ingredient pills */}
-                    {product.ingredients.includes(',') && (
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold text-emerald-900 uppercase tracking-wider">Hoạt chất tiêu biểu:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {product.ingredients.split(',').slice(0, 10).map((ing: string, i: number) => (
-                            <span key={i} className="inline-flex items-center gap-1.5 text-xs font-semibold bg-white text-emerald-900 px-3.5 py-1.5 rounded-full border border-emerald-200/80 shadow-2xs hover:border-emerald-300 transition-colors">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                              {ing.trim()}
-                            </span>
-                          ))}
-                          {product.ingredients.split(',').length > 10 && (
-                            <span className="inline-flex items-center text-xs font-bold bg-emerald-100/80 text-emerald-800 px-3 py-1.5 rounded-full">
-                              +{product.ingredients.split(',').length - 10} thành phần khác
-                            </span>
-                          )}
+                    {/* 2. BẢNG THÀNH PHẦN CHI TIẾT ĐẦY ĐỦ (INCI STANDARD) */}
+                    {product.ingredients && (
+                      <div className="space-y-3 pt-2">
+                        <h3 className="text-xs md:text-sm font-extrabold text-emerald-800 uppercase tracking-wider flex items-center gap-2">
+                          BẢNG THÀNH PHẦN CHI TIẾT ĐẦY ĐỦ (INCI STANDARD):
+                        </h3>
+                        <div className="bg-white rounded-2xl border border-emerald-200/80 p-5 text-xs md:text-sm text-slate-700 leading-relaxed font-sans font-normal shadow-2xs">
+                          {product.ingredients}
                         </div>
                       </div>
                     )}
-
-                    <div className="space-y-2">
-                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Bảng thành phần đầy đủ (INCI):</p>
-                      <div className="bg-white/90 rounded-xl p-4 border border-emerald-100 text-xs md:text-sm text-slate-600 leading-relaxed font-sans">
-                        {product.ingredients}
-                      </div>
-                    </div>
                   </div>
                 )}
               </div>
