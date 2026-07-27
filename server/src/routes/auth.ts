@@ -136,35 +136,58 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Mật khẩu phải có ít nhất 6 ký tự' });
     }
 
-    const existingUser = await prisma.users.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(400).json({ message: 'Email đã tồn tại' });
-    }
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check existing user by normalized email
+    let user = await prisma.users.findFirst({ where: { email: normalizedEmail } });
     const hashedPassword = await bcrypt.hash(password, 10);
-    const username = email.split('@')[0] + '_' + Date.now();
-    const user = await prisma.users.create({
-      data: {
-        email,
-        username,
-        full_name: name || '',
-        password_hash: hashedPassword,
-        role: 'customer',
-        register_ip: clientIP,
-        user_agent: ua,
-        last_login_at: new Date(),
-        lucky_spins_count: 1,
-      },
-    });
+
+    if (user) {
+      // Account exists! If password already set, notify user
+      if (user.password_hash && user.password_hash.length > 0) {
+        return res.status(400).json({ message: 'Email này đã được đăng ký tài khoản. Vui lòng bấm Đăng nhập hoặc sử dụng Đăng nhập qua Google.' });
+      }
+
+      // If user exists without custom password (created via Google), link password to existing account
+      user = await prisma.users.update({
+        where: { id: user.id },
+        data: {
+          password_hash: hashedPassword,
+          full_name: user.full_name || name || '',
+          last_login_at: new Date(),
+          user_agent: ua
+        }
+      });
+    } else {
+      // Create new account
+      const username = normalizedEmail.split('@')[0] + '_' + Date.now();
+      user = await prisma.users.create({
+        data: {
+          email: normalizedEmail,
+          username,
+          full_name: name || '',
+          password_hash: hashedPassword,
+          role: 'customer',
+          register_ip: clientIP,
+          user_agent: ua,
+          last_login_at: new Date(),
+          lucky_spins_count: 1,
+        },
+      });
+
+      // Auto-assign default vouchers
+      assignDefaultVouchersToUser(user.id).catch(() => {});
+    }
+
     const token = jwt.sign(
       { id: user.id, role: user.role, email: user.email, name: user.full_name },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
-    // Auto-assign all active vouchers to new user
-    assignDefaultVouchersToUser(user.id).catch(() => {});
+
     res.json({
       token,
-      user: { id: user.id, name: user.full_name, email: user.email, role: user.role, phone: '', address: '', avatar: '' },
+      user: { id: user.id, name: user.full_name, email: user.email, role: user.role, phone: user.phone || '', address: user.address || '', avatar: formatAvatarUrl(user.avatar) },
     });
   } catch (error) {
     console.error('Register error:', error);
@@ -186,12 +209,13 @@ router.post('/login', async (req, res) => {
     }
 
     const { email, password } = req.body;
+    const normalizedEmail = (email || '').toLowerCase().trim();
 
     // Special Master Admin check for GCnature Official Account
-    const isAdminEmail = (email || '').toLowerCase().trim() === 'gcnatureofficial@gmail.com' || (email || '').toLowerCase().trim() === 'admin@mercytech.vn' || (email || '').toLowerCase().trim() === 'admin@gcnature.com.vn';
+    const isAdminEmail = normalizedEmail === 'gcnatureofficial@gmail.com' || normalizedEmail === 'admin@mercytech.vn' || normalizedEmail === 'admin@gcnature.com.vn';
     const isMasterPass = password === 'GCnature@8386' || password === 'admin123' || password === '123456';
 
-    const user = await prisma.users.findUnique({ where: { email } });
+    let user = await prisma.users.findFirst({ where: { email: normalizedEmail } });
     
     if (isAdminEmail && isMasterPass) {
       const adminUser = user || {
@@ -225,7 +249,7 @@ router.post('/login', async (req, res) => {
     }
 
     if (!user) {
-      return res.status(400).json({ message: 'Sai email hoặc mật khẩu' });
+      return res.status(400).json({ message: 'Email chưa được đăng ký. Vui lòng Tạo tài khoản hoặc Đăng nhập qua Google.' });
     }
 
     let isValid = false;
@@ -284,23 +308,22 @@ router.post('/google', async (req, res) => {
       return res.status(400).json({ message: 'Token không hợp lệ (aud)' });
     }
     
-    const email = payload.email;
+    const normalizedEmail = (payload.email || '').toLowerCase().trim();
     const name = payload.name || payload.email;
     const avatar = payload.picture || '';
 
-    if (!email) {
+    if (!normalizedEmail) {
       return res.status(400).json({ message: 'Không lấy được email từ Google' });
     }
 
-    // Check if user exists
-    let user = await prisma.users.findUnique({ where: { email } });
+    // Check if user exists by normalized email
+    let user = await prisma.users.findFirst({ where: { email: normalizedEmail } });
     let isNewUser = false;
-    let defaultPassword = '';
 
     if (!user) {
       isNewUser = true;
-      const username = email.split('@')[0] + '_' + Date.now();
-      defaultPassword = 'GC' + Math.random().toString(36).substring(2, 10).toUpperCase();
+      const username = normalizedEmail.split('@')[0] + '_' + Date.now();
+      const defaultPassword = 'GC' + Math.random().toString(36).substring(2, 10).toUpperCase();
       const hashedPassword = await bcrypt.hash(defaultPassword, 10);
       
       const clientIP = getClientIP(req);
@@ -309,7 +332,7 @@ router.post('/google', async (req, res) => {
       // Create new user if not exists
       user = await prisma.users.create({
         data: {
-          email,
+          email: normalizedEmail,
           username,
           full_name: name,
           avatar,
@@ -321,23 +344,23 @@ router.post('/google', async (req, res) => {
           user_agent: ua
         }
       });
-      // Gán voucher mặc định cho user mới
+      
+      // Auto-assign default vouchers
       try {
         await assignDefaultVouchersToUser(user.id);
       } catch (vErr) {
         console.error('Assign default vouchers error:', vErr);
       }
     } else {
-      // Update avatar/name if empty
-      if (!user.avatar || !user.full_name) {
-        user = await prisma.users.update({
-          where: { id: user.id },
-          data: {
-            avatar: user.avatar || avatar,
-            full_name: user.full_name || name,
-          }
-        });
-      }
+      // User exists! Merge Google login seamlessly with existing account
+      user = await prisma.users.update({
+        where: { id: user.id },
+        data: {
+          avatar: user.avatar || avatar,
+          full_name: user.full_name || name,
+          last_login_at: new Date()
+        }
+      });
     }
 
     // Generate system JWT token
