@@ -38,17 +38,47 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS
-app.use(cors({ origin: FRONTEND_URL, credentials: true }));
+// CORS: Only allow FRONTEND_URL or gcnature.com.vn domains
+const allowedOrigins = [
+  FRONTEND_URL,
+  "https://gcnature.com.vn",
+  "https://www.gcnature.com.vn",
+  "http://localhost:8080",
+  "http://localhost:5173"
+];
 
-// Global rate limiter: 2000 requests per 15 minutes per IP (generous for local dev)
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Cross-Origin Request Blocked by Security Policy'));
+    }
+  },
+  credentials: true
+}));
+
+// Global rate limiter: 500 requests per 15 minutes per IP
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 2000,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'Quá nhiều yêu cầu, vui lòng thử lại sau.' },
+  message: { message: 'Quá nhiều yêu cầu từ địa chỉ IP của bạn. Vui lòng thử lại sau.' },
 }));
+
+// Strict rate limiter for authentication (prevent brute-force password guessing & registration spam)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Thao tác quá nhiều lần. Vui lòng đợi 15 phút trước khi thử lại.' },
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/google', authLimiter);
 
 // Limit JSON body size to 5mb (support bulk operations like spam cleanup)
 app.use(express.json({ limit: '5mb' }));
