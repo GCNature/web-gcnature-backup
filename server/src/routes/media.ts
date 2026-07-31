@@ -136,37 +136,44 @@ router.get('/list', listMediaHandler);
 // ═══════════════════════════════════
 // POST /api/media/upload — Upload media (images + videos)
 // ═══════════════════════════════════
-router.post('/upload', upload.any(), (req: any, res: any) => {
-  try {
-    const filesArray = req.files || (req.file ? [req.file] : []);
-    if (!filesArray || filesArray.length === 0) {
-      return res.status(400).json({ success: false, message: 'Không có file nào được tải lên' });
+router.post('/upload', (req: any, res: any) => {
+  upload.any()(req, res, (err: any) => {
+    if (err) {
+      console.error('[MediaUpload] Multer error:', err);
+      return res.status(400).json({ success: false, message: err.message || 'Lỗi xử lý file tải lên' });
     }
 
-    const uploaded = filesArray.map((file: any) => {
-      // Sync file to dist folder for production environment immediately
-      syncFileToDist('products', file.filename);
-      return {
-        filename: file.filename,
-        url: `/products/${file.filename}`,
-        size: file.size,
-        type: getFileType(file.filename),
-      };
-    });
+    try {
+      const filesArray = req.files || (req.file ? [req.file] : []);
+      if (!filesArray || filesArray.length === 0) {
+        return res.status(400).json({ success: false, message: 'Không có file nào được tải lên' });
+      }
 
-    const firstUrl = uploaded[0]?.url;
+      const uploaded = filesArray.map((file: any) => {
+        // Sync file to dist folder for production environment immediately
+        syncFileToDist('products', file.filename);
+        return {
+          filename: file.filename,
+          url: `/products/${file.filename}`,
+          size: file.size,
+          type: getFileType(file.filename),
+        };
+      });
 
-    res.json({
-      success: true,
-      message: `Đã tải lên ${uploaded.length} file`,
-      url: firstUrl,
-      fileUrl: firstUrl,
-      files: uploaded,
-    });
-  } catch (error) {
-    console.error('Media upload error:', error);
-    res.status(500).json({ success: false, message: 'Lỗi tải ảnh lên' });
-  }
+      const firstUrl = uploaded[0]?.url;
+
+      return res.json({
+        success: true,
+        message: `Đã tải lên ${uploaded.length} file`,
+        url: firstUrl,
+        fileUrl: firstUrl,
+        files: uploaded,
+      });
+    } catch (error: any) {
+      console.error('[MediaUpload] Processing error:', error);
+      return res.status(500).json({ success: false, message: 'Lỗi tải ảnh lên: ' + (error?.message || 'Lỗi server') });
+    }
+  });
 });
 
 // ═══════════════════════════════════

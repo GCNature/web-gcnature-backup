@@ -64,14 +64,26 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
     setUploading(true);
     try {
       const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch('/api/media/upload', {
         method: 'POST',
-        headers: {
-          Authorization: token ? `Bearer ${token}` : ''
-        },
+        headers,
         body: formData
       });
-      const data = await res.json();
+
+      const responseText = await res.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseErr) {
+        console.error('[MediaUpload] Non-JSON response:', responseText);
+        throw new Error(`Máy chủ trả về phản hồi HTML (${res.status}). Vui lòng kiểm tra dung lượng file.`);
+      }
+
       if (res.ok && (data.success || data.url || data.fileUrl || data.files)) {
         const uploadedUrl = data.url || data.fileUrl || data.files?.[0]?.url;
         if (uploadedUrl) {
@@ -83,7 +95,7 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
           toast.error("Tải ảnh thất bại: Không nhận được đường dẫn tệp");
         }
       } else {
-        toast.error("Tải ảnh thất bại: " + (data.message || 'Lỗi không xác định'));
+        toast.error("Tải ảnh thất bại: " + (data.message || `Lỗi server (HTTP ${res.status})`));
       }
     } catch (err: any) {
       toast.error("Lỗi khi tải ảnh: " + (err.message || 'Lỗi kết nối'));
@@ -150,7 +162,7 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
             </div>
             <h4 className="font-semibold text-base mb-1">Kéo thả hoặc Nhấp để Tải Ảnh từ Máy Tính</h4>
             <p className="text-xs text-muted-foreground mb-4">Hỗ trợ các định dạng PNG, JPG, WEBP, SVG, GIF (Tối đa 100MB)</p>
-            <label>
+            <label className="cursor-pointer">
               <input
                 type="file"
                 accept="image/*"
@@ -158,14 +170,9 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
                 onChange={handleFileUpload}
                 disabled={uploading}
               />
-              <Button
-                type="button"
-                variant="default"
-                disabled={uploading}
-                className="gap-2 bg-primary text-primary-foreground pointer-events-none font-semibold"
-              >
+              <span className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold shadow hover:bg-primary/90 transition-colors">
                 {uploading ? "Đang tải ảnh lên..." : "Chọn Tệp Từ Máy Tính"}
-              </Button>
+              </span>
             </label>
           </div>
         )}
