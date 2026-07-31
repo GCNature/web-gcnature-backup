@@ -1,15 +1,16 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-const tsxCmd = `"${path.resolve(__dirname, 'node_modules/.bin/tsx.cmd')}"`;
-const scriptPath = `"${path.resolve(__dirname, 'src/index.ts')}"`;
+const nodeExe = process.execPath;
+const tsxCli = path.resolve(__dirname, 'node_modules/tsx/dist/cli.mjs');
+const scriptPath = path.resolve(__dirname, 'src/index.ts');
 
-console.log('Starting GCnature backend with tsx:', tsxCmd);
+console.log('Starting GCnature backend directly with node + tsx cli:', nodeExe, tsxCli, scriptPath);
 
-const child = spawn(tsxCmd, [scriptPath], {
+const child = spawn(nodeExe, [tsxCli, scriptPath], {
   cwd: __dirname,
   stdio: 'inherit',
-  shell: true
+  env: process.env
 });
 
 child.on('exit', (code) => {
