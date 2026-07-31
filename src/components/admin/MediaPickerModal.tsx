@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Image as ImageIcon, Check, Loader2, Search, HardDrive } from "lucide-react";
+import { Upload, Image as ImageIcon, Check, Loader2, Search, HardDrive, RefreshCw } from "lucide-react";
 import { apiGet } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -23,14 +23,23 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
   const fetchMedia = async () => {
     setLoading(true);
     try {
-      const res = await apiGet<any>('/media');
+      const res = await apiGet<any>(`/media/list?_t=${Date.now()}`);
       if (res && Array.isArray(res.files)) {
-        setImages(res.files.map((f: any) => typeof f === 'string' ? f : (f.url || f.fileUrl)));
+        const fileUrls = res.files.map((f: any) => {
+          if (typeof f === 'string') return f;
+          return f.url || (f.filename ? `/products/${f.filename}` : '');
+        }).filter(Boolean);
+        setImages(fileUrls);
       } else if (Array.isArray(res)) {
-        setImages(res.map((f: any) => typeof f === 'string' ? f : (f.url || f.fileUrl)));
+        const fileUrls = res.map((f: any) => {
+          if (typeof f === 'string') return f;
+          return f.url || (f.filename ? `/products/${f.filename}` : '');
+        }).filter(Boolean);
+        setImages(fileUrls);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load media gallery:', err);
+      toast.error("Lỗi kết nối kho ảnh: " + (err.message || 'Lỗi server'));
     } finally {
       setLoading(false);
     }
@@ -48,6 +57,7 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
     if (!file) return;
 
     const formData = new FormData();
+    formData.append('images', file);
     formData.append('file', file);
     formData.append('image', file);
 
@@ -62,11 +72,16 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
         body: formData
       });
       const data = await res.json();
-      if (res.ok && (data.url || data.fileUrl)) {
-        const uploadedUrl = data.url || data.fileUrl;
-        toast.success("Đã tải ảnh từ máy tính lên thành công!");
-        onSelectImage(uploadedUrl);
-        onClose();
+      if (res.ok && (data.success || data.url || data.fileUrl || data.files)) {
+        const uploadedUrl = data.url || data.fileUrl || data.files?.[0]?.url;
+        if (uploadedUrl) {
+          toast.success("Đã tải ảnh từ máy tính lên thành công!");
+          fetchMedia(); // Refresh media gallery
+          onSelectImage(uploadedUrl);
+          onClose();
+        } else {
+          toast.error("Tải ảnh thất bại: Không nhận được đường dẫn tệp");
+        }
       } else {
         toast.error("Tải ảnh thất bại: " + (data.message || 'Lỗi không xác định'));
       }
@@ -86,32 +101,44 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col bg-card">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
-            <ImageIcon className="w-5 h-5 text-primary" /> Chọn hoặc Tải Ảnh Mới
+            <ImageIcon className="w-5 h-5 text-primary" /> Kho Dữ Liệu Ảnh & Tải Ảnh Mới
           </DialogTitle>
           <DialogDescription>
-            Tải ảnh từ máy tính của bạn hoặc chọn ảnh đã tải lên trong kho thư viện media.
+            Tải ảnh trực tiếp từ máy tính hoặc chọn ảnh đã có trong Kho Dữ Liệu Media của hệ thống.
           </DialogDescription>
         </DialogHeader>
 
         {/* Tab Switchers */}
-        <div className="flex gap-2 border-b border-border pb-2">
+        <div className="flex items-center justify-between border-b border-border pb-2">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={activeTab === "upload" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("upload")}
+              className="gap-2"
+            >
+              <HardDrive className="w-4 h-4" /> Tải từ Máy Tính
+            </Button>
+            <Button
+              type="button"
+              variant={activeTab === "library" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("library")}
+              className="gap-2"
+            >
+              <ImageIcon className="w-4 h-4" /> Kho Dữ Liệu Web ({images.length})
+            </Button>
+          </div>
           <Button
             type="button"
-            variant={activeTab === "upload" ? "default" : "outline"}
+            variant="ghost"
             size="sm"
-            onClick={() => setActiveTab("upload")}
-            className="gap-2"
+            onClick={fetchMedia}
+            title="Làm mới kho ảnh"
+            className="text-xs text-muted-foreground gap-1"
           >
-            <HardDrive className="w-4 h-4" /> Tải từ Máy Tính
-          </Button>
-          <Button
-            type="button"
-            variant={activeTab === "library" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveTab("library")}
-            className="gap-2"
-          >
-            <ImageIcon className="w-4 h-4" /> Chọn từ Kho Thư Viện ({images.length})
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Làm mới
           </Button>
         </div>
 
@@ -122,7 +149,7 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
               {uploading ? <Loader2 className="w-7 h-7 animate-spin" /> : <Upload className="w-7 h-7" />}
             </div>
             <h4 className="font-semibold text-base mb-1">Kéo thả hoặc Nhấp để Tải Ảnh từ Máy Tính</h4>
-            <p className="text-xs text-muted-foreground mb-4">Hỗ trợ các định dạng PNG, JPG, WEBP, SVG, GIF (Tối đa 5MB)</p>
+            <p className="text-xs text-muted-foreground mb-4">Hỗ trợ các định dạng PNG, JPG, WEBP, SVG, GIF (Tối đa 100MB)</p>
             <label>
               <input
                 type="file"
@@ -135,7 +162,7 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
                 type="button"
                 variant="default"
                 disabled={uploading}
-                className="gap-2 bg-primary text-primary-foreground pointer-events-none"
+                className="gap-2 bg-primary text-primary-foreground pointer-events-none font-semibold"
               >
                 {uploading ? "Đang tải ảnh lên..." : "Chọn Tệp Từ Máy Tính"}
               </Button>
@@ -149,7 +176,7 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
             <div className="relative mb-3">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Tìm tên ảnh..."
+                placeholder="Tìm tên ảnh trong kho dữ liệu..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -164,7 +191,7 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
               ) : filteredImages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
                   <ImageIcon className="w-12 h-12 mb-2 opacity-40" />
-                  <p>Chưa tìm thấy ảnh nào.</p>
+                  <p>Chưa có ảnh trong kho dữ liệu.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
@@ -204,7 +231,7 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
         {/* Footer Actions */}
         <div className="flex justify-between items-center pt-3 border-t border-border mt-auto">
           <p className="text-xs text-muted-foreground truncate max-w-[350px]">
-            {selectedUrl ? `Đã chọn: ${selectedUrl}` : "Hãy chọn ảnh hoặc tải từ máy tính..."}
+            {selectedUrl ? `Đã chọn: ${selectedUrl}` : "Hãy chọn 1 ảnh hoặc tải từ máy tính..."}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose}>
@@ -218,7 +245,7 @@ export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerMo
                   onClose();
                 }
               }}
-              className="bg-primary text-primary-foreground"
+              className="bg-primary text-primary-foreground font-semibold"
             >
               Xác Nhận Chọn Ảnh
             </Button>

@@ -85,12 +85,12 @@ const upload = multer({
 });
 
 // ═══════════════════════════════════
-// GET /api/media/list — List all media (images + videos)
+// GET /api/media & GET /api/media/list — List all media (images + videos)
 // ═══════════════════════════════════
-router.get('/list', (_req: any, res: any) => {
+const listMediaHandler = (_req: any, res: any) => {
   try {
     if (!fs.existsSync(PRODUCTS_DIR)) {
-      return res.json({ files: [], groups: [], stats: { totalFiles: 0, totalSize: 0 } });
+      return res.json({ success: true, files: [], groups: [], stats: { totalFiles: 0, totalSize: 0 } });
     }
 
     const allFiles = fs.readdirSync(PRODUCTS_DIR)
@@ -109,17 +109,14 @@ router.get('/list', (_req: any, res: any) => {
         group: extractGroup(f),
         type: getFileType(f),
       };
-    }).sort((a, b) => {
-      // Sort by group then by filename
-      if (a.group !== b.group) return a.group.localeCompare(b.group);
-      return a.filename.localeCompare(b.filename);
-    });
+    }).sort((a, b) => new Date(b.modified).getTime() - new Date(a.modified).getTime()); // Newest first!
 
     // Extract unique groups
     const groupSet = new Set(files.map(f => f.group));
     const groups = Array.from(groupSet).sort();
 
     res.json({
+      success: true,
       files,
       groups,
       stats: {
@@ -129,20 +126,24 @@ router.get('/list', (_req: any, res: any) => {
     });
   } catch (error) {
     console.error('Media list error:', error);
-    res.status(500).json({ message: 'Lỗi liệt kê ảnh' });
+    res.status(500).json({ success: false, message: 'Lỗi liệt kê ảnh' });
   }
-});
+};
+
+router.get('/', listMediaHandler);
+router.get('/list', listMediaHandler);
 
 // ═══════════════════════════════════
 // POST /api/media/upload — Upload media (images + videos)
 // ═══════════════════════════════════
-router.post('/upload', upload.array('images', 20), (req: any, res: any) => {
+router.post('/upload', upload.any(), (req: any, res: any) => {
   try {
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ message: 'Không có file nào được tải lên' });
+    const filesArray = req.files || (req.file ? [req.file] : []);
+    if (!filesArray || filesArray.length === 0) {
+      return res.status(400).json({ success: false, message: 'Không có file nào được tải lên' });
     }
 
-    const uploaded = req.files.map((file: any) => {
+    const uploaded = filesArray.map((file: any) => {
       // Sync file to dist folder for production environment immediately
       syncFileToDist('products', file.filename);
       return {
@@ -153,13 +154,18 @@ router.post('/upload', upload.array('images', 20), (req: any, res: any) => {
       };
     });
 
+    const firstUrl = uploaded[0]?.url;
+
     res.json({
+      success: true,
       message: `Đã tải lên ${uploaded.length} file`,
+      url: firstUrl,
+      fileUrl: firstUrl,
       files: uploaded,
     });
   } catch (error) {
     console.error('Media upload error:', error);
-    res.status(500).json({ message: 'Lỗi tải ảnh lên' });
+    res.status(500).json({ success: false, message: 'Lỗi tải ảnh lên' });
   }
 });
 
