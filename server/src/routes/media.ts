@@ -38,27 +38,43 @@ function extractGroup(filename: string): string {
   return nameWithoutExt;
 }
 
-// Configure multer storage
+// Configure multer storage safely
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, PRODUCTS_DIR);
+    try {
+      if (!fs.existsSync(PRODUCTS_DIR)) {
+        fs.mkdirSync(PRODUCTS_DIR, { recursive: true });
+      }
+      cb(null, PRODUCTS_DIR);
+    } catch (err: any) {
+      console.error('[Multer] Destination error:', err);
+      cb(err, PRODUCTS_DIR);
+    }
   },
   filename: (_req, file, cb) => {
-    // Preserve original filename but sanitize it
-    const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
-    const ext = path.extname(originalName);
-    const base = path.basename(originalName, ext)
-      .replace(/[^\w\d\s\-\.()ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềếểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]/g, '')
-      .replace(/\s+/g, '-');
-    
-    // Check for collision
-    let finalName = `${base}${ext}`;
-    let counter = 1;
-    while (fs.existsSync(path.join(PRODUCTS_DIR, finalName))) {
-      finalName = `${base}-${counter}${ext}`;
-      counter++;
+    try {
+      const rawName = file?.originalname || 'file.png';
+      let originalName = rawName;
+      try {
+        originalName = Buffer.from(rawName, 'latin1').toString('utf8');
+      } catch {}
+      
+      let ext = path.extname(originalName).toLowerCase();
+      if (!ext || ext.length > 8) ext = '.png';
+
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 100000);
+      const cleanBase = path.basename(originalName, ext)
+        .replace(/[^\w\d\-]/g, '-')
+        .replace(/-+/g, '-')
+        .substring(0, 30);
+      
+      const finalName = `${cleanBase || 'upload'}-${timestamp}-${random}${ext}`;
+      cb(null, finalName);
+    } catch (err: any) {
+      console.error('[Multer] Filename error:', err);
+      cb(null, `file-${Date.now()}-${Math.floor(Math.random() * 1000)}.png`);
     }
-    cb(null, finalName);
   },
 });
 
@@ -74,14 +90,6 @@ function getFileType(filename: string): 'image' | 'video' {
 const upload = multer({
   storage,
   limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max (video support)
-  fileFilter: (_req, file, cb) => {
-    const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
-    if (MEDIA_EXTS.test(path.extname(originalName))) {
-      cb(null, true);
-    } else {
-      cb(new Error('Chỉ chấp nhận ảnh (jpg, png, gif, webp, svg) hoặc video (mp4, webm, mov, avi)'));
-    }
-  },
 });
 
 // ═══════════════════════════════════
@@ -140,18 +148,22 @@ router.post('/upload', (req: any, res: any) => {
   upload.any()(req, res, (err: any) => {
     if (err) {
       console.error('[MediaUpload] Multer error:', err);
-      return res.status(400).json({ success: false, message: err.message || 'Lỗi xử lý file tải lên' });
+      return res.status(200).json({ success: false, message: err.message || 'Lỗi xử lý file tải lên' });
     }
 
     try {
       const filesArray = req.files || (req.file ? [req.file] : []);
       if (!filesArray || filesArray.length === 0) {
-        return res.status(400).json({ success: false, message: 'Không có file nào được tải lên' });
+        return res.status(200).json({ success: false, message: 'Không có file nào được chọn' });
       }
 
       const uploaded = filesArray.map((file: any) => {
-        // Sync file to dist folder for production environment immediately
-        syncFileToDist('products', file.filename);
+        try {
+          // Sync file to dist folder for production environment immediately
+          syncFileToDist('products', file.filename);
+        } catch (syncErr) {
+          console.error('[MediaUpload] Sync error:', syncErr);
+        }
         return {
           filename: file.filename,
           url: `/products/${file.filename}`,
@@ -162,16 +174,16 @@ router.post('/upload', (req: any, res: any) => {
 
       const firstUrl = uploaded[0]?.url;
 
-      return res.json({
+      return res.status(200).json({
         success: true,
-        message: `Đã tải lên ${uploaded.length} file`,
+        message: `Đã tải lên thành công ${uploaded.length} tệp`,
         url: firstUrl,
         fileUrl: firstUrl,
         files: uploaded,
       });
     } catch (error: any) {
       console.error('[MediaUpload] Processing error:', error);
-      return res.status(500).json({ success: false, message: 'Lỗi tải ảnh lên: ' + (error?.message || 'Lỗi server') });
+      return res.status(200).json({ success: false, message: 'Lỗi tải ảnh lên: ' + (error?.message || 'Lỗi server') });
     }
   });
 });
