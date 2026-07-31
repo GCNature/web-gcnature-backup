@@ -78,6 +78,7 @@ import AdminPosts from "./pages/admin/AdminPosts.tsx";
 import AdminPostCategories from "./pages/admin/AdminPostCategories.tsx";
 import AdminNotifications from "./pages/admin/AdminNotifications.tsx";
 import AdminSettings from "./pages/admin/AdminSettings.tsx";
+import AdminHeaderFooter from "./pages/admin/AdminHeaderFooter.tsx";
 import AdminBanners from "./pages/admin/AdminBanners.tsx";
 import AdminMembers from "./pages/admin/AdminMembers.tsx";
 import AdminPayments from "./pages/admin/AdminPayments.tsx";
@@ -95,6 +96,7 @@ import AdminVouchers from "./pages/admin/AdminVouchers.tsx";
 import AdminPages from "./pages/admin/AdminPages.tsx";
 import AdminMenu from "./pages/admin/AdminMenu.tsx";
 import AdminGuard from "./components/AdminGuard.tsx";
+import { SiteConfigProvider } from "@/context/SiteConfigContext";
 
 const queryClient = new QueryClient();
 const App = () => (
@@ -102,6 +104,7 @@ const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <SiteConfigProvider>
         <ShopProvider>
           <TooltipProvider>
 
@@ -158,6 +161,7 @@ const App = () => (
                 <Route path="/admin/payments" element={<AdminGuard allowedRoles={['admin']}><AdminPayments /></AdminGuard>} />
                 <Route path="/admin/bank-history" element={<AdminGuard allowedRoles={['admin']}><AdminBankHistory /></AdminGuard>} />
                 <Route path="/admin/settings" element={<AdminGuard allowedRoles={['admin']}><AdminSettings /></AdminGuard>} />
+                <Route path="/admin/header-footer" element={<AdminGuard allowedRoles={['admin']}><AdminHeaderFooter /></AdminGuard>} />
                 <Route path="/admin/pages" element={<AdminGuard allowedRoles={['admin', 'shop_manager']}><AdminPages /></AdminGuard>} />
                 <Route path="/admin/menu" element={<AdminGuard allowedRoles={['admin']}><AdminMenu /></AdminGuard>} />
                 <Route path="/admin/transactions" element={<AdminGuard allowedRoles={['admin']}><AdminTransactions /></AdminGuard>} />
@@ -171,6 +175,7 @@ const App = () => (
             </BrowserRouter>
           </TooltipProvider>
         </ShopProvider>
+        </SiteConfigProvider>
       </AuthProvider>
     </QueryClientProvider>
   </HelmetProvider>

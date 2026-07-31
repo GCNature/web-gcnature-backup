@@ -335,8 +335,39 @@ router.get('/mega-menu', async (req, res) => {
   }
 });
 
+// ── Public endpoint: site config for header, footer, social, and floating buttons ──
+router.get('/site-config', async (req, res) => {
+  try {
+    const setting = await prisma.settings.findUnique({ where: { key: 'site_config' } });
+    if (setting?.value) {
+      res.json({ success: true, data: JSON.parse(setting.value) });
+    } else {
+      res.json({ success: true, data: null });
+    }
+  } catch (error) {
+    console.error('Get site config error:', error);
+    res.json({ success: false, data: null });
+  }
+});
+
 // All remaining settings routes require staff authentication
 router.use(isStaff);
+
+// ── Admin endpoint: save site config ──
+router.put('/site-config', async (req, res) => {
+  try {
+    const siteConfigData = req.body;
+    await prisma.settings.upsert({
+      where: { key: 'site_config' },
+      update: { value: JSON.stringify(siteConfigData), updated_at: new Date() },
+      create: { key: 'site_config', value: JSON.stringify(siteConfigData) }
+    });
+    res.json({ success: true, message: 'Đã lưu cấu hình Header, Footer & Floating Buttons' });
+  } catch (error) {
+    console.error('Update site config error:', error);
+    res.status(500).json({ success: false, message: 'Lỗi khi lưu cấu hình' });
+  }
+});
 
 // GET all settings
 router.get('/', async (req, res) => {
