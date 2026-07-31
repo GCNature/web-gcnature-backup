@@ -1,4 +1,4 @@
-export function logHotlineClick(phone: string = "0898273899") {
+export function logHotlineClick(phone: string = "0559869392") {
   fetch('/api/notifications/log-hotline', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

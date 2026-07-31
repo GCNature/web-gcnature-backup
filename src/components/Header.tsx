@@ -772,7 +772,7 @@ const Header = () => {
             <div className="grid grid-cols-2 gap-2">
               <a
                 id="mobile-call-now"
-                href="tel:0898273899"
+                href="tel:0559869392"
                 className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700 transition-colors"
               >
                 <Phone className="w-4 h-4" /> Gọi ngay

@@ -614,27 +614,6 @@ const Recruitment = () => {
 
                     {isExpanded && (
                       <div className="border-t border-slate-100 pt-6 mt-4 prose prose-teal max-w-none text-sm text-slate-700 leading-relaxed font-normal space-y-4">
-                        {job.jdFileUrl && (
-                          <div className="p-4 bg-teal-50/80 rounded-2xl border border-teal-200 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold">
-                                📄
-                              </div>
-                              <div>
-                                <h4 className="text-xs font-extrabold text-teal-950">Tệp JD Đính Kèm Vị Trí Tuyển Dụng</h4>
-                                <p className="text-[11px] text-teal-700">{job.jdFileName || 'Tệp tài liệu đính kèm (PDF/Ảnh/Word)'}</p>
-                              </div>
-                            </div>
-
-                            <button
-                              onClick={() => setActiveJdModalJob(job)}
-                              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-sm"
-                            >
-                              <Eye className="w-4 h-4" /> Mở Tệp Xem Trực Tiếp
-                            </button>
-                          </div>
-                        )}
-
                         <div dangerouslySetInnerHTML={{ __html: job.contentHtml || job.content || "<p>Chưa có mô tả bổ sung.</p>" }} />
                         
                         <div className="pt-4 flex justify-end">

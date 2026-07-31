@@ -837,11 +837,11 @@ const ProductDetail = () => {
                 Mua ngay
               </button>
               <a
-                href="tel:0898273899"
+                href="tel:0559869392"
                 className="w-full flex items-center justify-center gap-2 border-2 border-[#5dc1d1] text-[#5dc1d1] font-bold py-3.5 rounded-xl text-sm hover:bg-cyan-50/50 transition-all active:scale-[0.98]"
               >
                 <Phone className="w-4 h-4" />
-                Gọi tư vấn: 0898.273.899
+                Gọi tư vấn: 0559.869.392
               </a>
 
               {/* Shopee + TikTok Shop reference buttons */}

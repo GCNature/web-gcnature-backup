@@ -1000,7 +1000,7 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
               <ul className="list-none space-y-1 pl-0">
                 <li><span className="font-semibold text-gray-800">Tên đơn vị:</span> GCnature Vietnam</li>
                 <li><span className="font-semibold text-gray-800">Địa chỉ:</span> 36 đường số 5 KĐT Vạn Phúc, Thủ Đức, HCM</li>
-                <li><span className="font-semibold text-gray-800">Hotline:</span> 0898273899</li>
+                <li><span className="font-semibold text-gray-800">Hotline:</span> 0559869392</li>
                 <li><span className="font-semibold text-gray-800">Email:</span> gcnatureofficial@gmail.com</li>
               </ul>
  
@@ -1057,7 +1057,7 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
                 <li>Chúng tôi tuyệt đối không cung cấp, chia sẻ thông tin khách hàng cho bất kỳ bên thứ ba nào vì mục đích thương mại mà không có sự đồng ý của Quý khách.</li>
               </ul>
               <p className="font-medium text-blue-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                Mọi thắc mắc hoặc yêu cầu hỗ trợ, Quý khách vui lòng liên hệ Hotline 0898 273 899 để được giải quyết nhanh nhất.
+                Mọi thắc mắc hoặc yêu cầu hỗ trợ, Quý khách vui lòng liên hệ Hotline 0559 869 392 để được giải quyết nhanh nhất.
               </p>
             </div>
             

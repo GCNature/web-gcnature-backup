@@ -272,7 +272,7 @@ const OrderWarehouse = () => {
                     {/* Contact */}
                     <div className="flex gap-3">
                       <a
-                        href="https://zalo.me/0898273899"
+                        href="https://zalo.me/0559869392"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-sm transition-all active:scale-95"
@@ -281,7 +281,7 @@ const OrderWarehouse = () => {
                         Nhắn Zalo
                       </a>
                       <a
-                        href="tel:0898273899"
+                        href="tel:0559869392"
                         className="flex-1 flex items-center justify-center gap-2 border-2 border-[#5dc1d1] text-[#5dc1d1] font-bold py-3 rounded-xl text-sm hover:bg-cyan-50/50 transition-all active:scale-95"
                       >
                         <Phone className="w-4 h-4" />

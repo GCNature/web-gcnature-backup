@@ -13,11 +13,11 @@ const defaultFaqs = [
   },
   {
     question: "GCnature có tư vấn da trước khi mua không?",
-    answer: "Có, đội ngũ chuyên gia da liễu với hơn 10 năm kinh nghiệm của GCnature luôn sẵn sàng tư vấn miễn phí 24/7 để giúp bạn lựa chọn sản phẩm phù hợp nhất với loại da của mình qua Hotline/Zalo: 0898.273.899."
+    answer: "Có, đội ngũ chuyên gia da liễu với hơn 10 năm kinh nghiệm của GCnature luôn sẵn sàng tư vấn miễn phí 24/7 để giúp bạn lựa chọn sản phẩm phù hợp nhất với loại da của mình qua Hotline/Zalo: 0559.869.392."
   },
   {
     question: "Chính sách đổi trả sản phẩm khi kích ứng như thế nào?",
-    answer: "GCnature cam kết đồng hành cùng bạn. Nếu gặp tình trạng kích ứng da (trong vòng 7 ngày kể từ khi mua), vui lòng liên hệ ngay qua Hotline 0898.273.899 để chúng tôi hỗ trợ đổi trả sản phẩm hoặc hướng dẫn xử lý phục hồi da kịp thời."
+    answer: "GCnature cam kết đồng hành cùng bạn. Nếu gặp tình trạng kích ứng da (trong vòng 7 ngày kể từ khi mua), vui lòng liên hệ ngay qua Hotline 0559.869.392 để chúng tôi hỗ trợ đổi trả sản phẩm hoặc hướng dẫn xử lý phục hồi da kịp thời."
   },
   {
     question: "GCnature miễn phí giao hàng toàn quốc khi nào?",

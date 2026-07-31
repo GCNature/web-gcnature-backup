@@ -572,10 +572,10 @@ const About = () => {
                     <Mail className="w-4 h-4" /> Email liên hệ
                   </a>
                   <a 
-                    href="tel:0898273899" 
+                    href="tel:0559869392" 
                     className="flex items-center justify-center gap-2 border border-slate-700 hover:bg-slate-800 text-slate-200 font-extrabold py-2.5 px-6 rounded-xl text-xs transition-all float-pulse-teal"
                   >
-                    <Phone className="w-4 h-4 text-teal-400" /> 0898.273.899
+                    <Phone className="w-4 h-4 text-teal-400" /> 0559.869.392
                   </a>
                 </div>
               </div>

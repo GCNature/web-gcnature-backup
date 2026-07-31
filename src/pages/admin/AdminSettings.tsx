@@ -19,8 +19,8 @@ export default function AdminSettings() {
   const [siteSettings, setSiteSettings] = useState({
     siteName: "GCnature - Sự chăm sóc toàn diện",
     siteUrl: "https://gcnature.com.vn",
-    hotline: "0898.273.899",
-    zaloUrl: "https://zalo.me/0898273899",
+    hotline: "0559.869.392",
+    zaloUrl: "https://zalo.me/0559869392",
     addressHCM: "36 đường số 5 KĐT Vạn Phúc, Thủ Đức, HCM",
     addressHN: "S1.06 Vinsmart City, Nam Từ Liêm, Hà Nội",
     productPolicy: "",
@@ -49,7 +49,7 @@ export default function AdminSettings() {
   const [socialSettings, setSocialSettings] = useState({
     facebook: "https://www.facebook.com/GCnature",
     instagram: "https://www.instagram.com/gcnatureofficial",
-    tiktok: "https://www.tiktok.com/@gcnaturehcm",
+    tiktok: "https://www.tiktok.com/@gcnature.com.vn",
     threads: "https://www.threads.com/@gcnatureofficial",
     pinterest: "https://www.pinterest.com/gcnaturekorea",
     youtube: "https://www.youtube.com/@GCnatureOfficial",

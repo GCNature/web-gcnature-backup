@@ -131,7 +131,7 @@ const policiesData: Record<string, PolicyInfo> = {
         title: "Điều 1: Tiếp nhận khiếu nại",
         content: [
           "GCnature sẵn sàng tiếp nhận khiếu nại của khách hàng qua các kênh chính thức sau:",
-          "1. Hotline / Zalo tiếp nhận: 0898.273.899 (Hỗ trợ từ 9:00 - 21:30 hàng ngày).",
+          "1. Hotline / Zalo tiếp nhận: 0559.869.392 (Hỗ trợ từ 9:00 - 21:30 hàng ngày).",
           "2. Email tiếp nhận: gcnatureofficial@gmail.com",
           "3. Thời hạn khiếu nại: Trong vòng 7 ngày làm việc kể từ thời điểm nhận hàng thành công ghi nhận trên hệ thống vận chuyển.",
         ],
@@ -329,10 +329,10 @@ const Policy = () => {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <a
-                    href="tel:0898273899"
+                    href="tel:0559869392"
                     className="inline-flex items-center justify-center px-6 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors"
                   >
-                    📞 Hotline: 0898.273.899
+                    📞 Hotline: 0559.869.392
                   </a>
                   <button
                     onClick={() => setIsContactOpen(true)}

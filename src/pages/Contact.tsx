@@ -105,7 +105,7 @@ const Contact = () => {
                     <Phone className="w-6 h-6" />
                   </div>
                   <h3 className="font-bold mb-2">Gọi ngay cho chúng tôi</h3>
-                  <a href="tel:0898273899" className="text-teal-600 hover:underline font-semibold">0898.273.899</a>
+                  <a href="tel:0559869392" className="text-teal-600 hover:underline font-semibold">0559.869.392</a>
                </div>
 
                <div className="flex flex-col items-center p-6 bg-card border border-border rounded-xl text-center hover:shadow-md transition-all">

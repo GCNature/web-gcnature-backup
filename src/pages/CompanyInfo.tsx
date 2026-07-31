@@ -70,7 +70,7 @@ const companyInfoData: Record<string, CompanyInfoData> = {
         content: [
           "Gửi CV (hồ sơ cá nhân) qua email: gcnatureofficial@gmail.com",
           "Tiêu đề email: [Ứng tuyển] – Họ tên – Vị trí ứng tuyển",
-          "Hoặc liên hệ trực tiếp qua Hotline: 0898.273.899",
+          "Hoặc liên hệ trực tiếp qua Hotline: 0559.869.392",
           "Nhắn tin qua Fanpage: GCnature",
           "Thời gian phản hồi: GCnature sẽ liên hệ lại trong vòng 3–5 ngày làm việc sau khi nhận CV.",
         ],
@@ -110,7 +110,7 @@ const companyInfoData: Record<string, CompanyInfoData> = {
       {
         title: "3. Quy trình đăng ký hợp tác",
         content: [
-          "Bước 1: Liên hệ qua email gcnatureofficial@gmail.com hoặc Hotline 0898.273.899.",
+          "Bước 1: Liên hệ qua email gcnatureofficial@gmail.com hoặc Hotline 0559.869.392.",
           "Bước 2: Gửi thông tin cá nhân/doanh nghiệp và hình thức hợp tác mong muốn.",
           "Bước 3: Đội ngũ GCnature đánh giá và phản hồi trong vòng 2 ngày làm việc.",
           "Bước 4: Thống nhất các chính sách chiết khấu, ký kết hợp đồng và tiến hành giao dịch.",
@@ -120,8 +120,8 @@ const companyInfoData: Record<string, CompanyInfoData> = {
         title: "4. Thông tin liên hệ chính thức",
         content: [
           "📧 Email hợp tác: gcnatureofficial@gmail.com",
-          "📞 Hotline: 0898.273.899 – Tư vấn hợp tác đại lý, sỉ, CTV",
-          "💬 Zalo: 0898.273.899",
+          "📞 Hotline: 0559.869.392 – Tư vấn hợp tác đại lý, sỉ, CTV",
+          "💬 Zalo: 0559.869.392",
           "🏢 Địa chỉ Hà Nội: S1.06 Vinsmart City, Nam Từ Liêm, Hà Nội",
           "🏢 Địa chỉ Hồ Chí Minh: 36 đường số 5 KĐT Vạn Phúc, Thủ Đức, HCM",
         ],
@@ -144,7 +144,7 @@ const companyInfoData: Record<string, CompanyInfoData> = {
       {
         title: "2. Tư vấn và chăm sóc da",
         content: [
-          "❓ Tôi có được tư vấn trước khi mua sản phẩm không?\n→ Có. Đội ngũ chuyên gia của GCnature với hơn 10 năm kinh nghiệm luôn sẵn sàng tư vấn miễn phí liệu trình chăm sóc da phù hợp nhất qua Hotline/Zalo: 0898.273.899.",
+          "❓ Tôi có được tư vấn trước khi mua sản phẩm không?\n→ Có. Đội ngũ chuyên gia của GCnature với hơn 10 năm kinh nghiệm luôn sẵn sàng tư vấn miễn phí liệu trình chăm sóc da phù hợp nhất qua Hotline/Zalo: 0559.869.392.",
           "❓ Nếu da tôi bị kích ứng sau khi sử dụng thì sao?\n→ GCnature cam kết đồng hành cùng bạn. Nếu gặp tình trạng kích ứng da (trong vòng 7 ngày kể từ khi mua), vui lòng liên hệ ngay để chúng tôi hỗ trợ đổi trả sản phẩm hoặc hướng dẫn xử lý phục hồi da kịp thời.",
         ],
       },
@@ -160,7 +160,7 @@ const companyInfoData: Record<string, CompanyInfoData> = {
         title: "4. Chính sách đổi trả & bảo hành",
         content: [
           "❓ Tôi có được đổi trả sản phẩm đã khui hộp không?\n→ GCnature chỉ áp dụng đổi trả cho sản phẩm chưa khui seal/hộp trong vòng 7 ngày (lỗi do vận chuyển hoặc giao sai hàng). Đối với trường hợp kích ứng da, chúng tôi sẽ xem xét dựa trên tình trạng da thực tế để có hướng giải quyết tốt nhất.",
-          "❓ Làm thế nào để gửi yêu cầu bảo hành hoặc đổi trả?\n→ Vui lòng liên hệ Hotline 0898.273.899 hoặc gửi hình ảnh/video khui hàng về Zalo/Email của chúng tôi để được giải quyết nhanh nhất trong vòng 24h.",
+          "❓ Làm thế nào để gửi yêu cầu bảo hành hoặc đổi trả?\n→ Vui lòng liên hệ Hotline 0559.869.392 hoặc gửi hình ảnh/video khui hàng về Zalo/Email của chúng tôi để được giải quyết nhanh nhất trong vòng 24h.",
         ],
       },
     ],
@@ -233,10 +233,10 @@ const CompanyInfo = () => {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <a
-                    href="tel:0898273899"
+                    href="tel:0559869392"
                     className="inline-flex items-center justify-center px-6 py-3 bg-teal-600 text-white rounded-lg font-semibold hover:bg-teal-700 transition-colors active:scale-95"
                   >
-                    📞 Gọi: 0898.273.899
+                    📞 Gọi: 0559.869.392
                   </a>
                   <button
                     onClick={() => setIsContactOpen(true)}

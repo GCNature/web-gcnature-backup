@@ -66,12 +66,16 @@ const Register = () => {
   const handleGoogleSuccess = async (credentialResponse: any) => {
     setLoading(true);
     try {
+      if (!credentialResponse?.credential) {
+        throw new Error("Google không trả về thông tin xác thực. Vui lòng thử lại hoặc đăng ký bằng Email.");
+      }
+
       let decoded: any = null;
       try {
-        if (credentialResponse?.credential) {
-          decoded = jwtDecode(credentialResponse.credential);
-        }
-      } catch (e) {}
+        decoded = jwtDecode(credentialResponse.credential);
+      } catch (e) {
+        console.warn("jwtDecode failed, will rely on backend decoding");
+      }
 
       const res = await fetch(`${API_BASE}/auth/google`, {
         method: "POST",
@@ -86,7 +90,7 @@ const Register = () => {
 
       const data = await res.json();
       if (!res.ok || !data.user) {
-        throw new Error(data.message || "Xác thực tài khoản Google thất bại");
+        throw new Error(data.message || "Server không thể xác thực tài khoản Google");
       }
 
       login(data.user, data.token);
@@ -127,13 +131,17 @@ const Register = () => {
             <div className="flex justify-center mb-5">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
-                onError={() => toast.error("Đăng ký Google thất bại")}
+                onError={() => {
+                  console.error("GoogleLogin SDK onError triggered — domain not authorized in Google Cloud Console");
+                  toast.error("Xác thực Google thất bại. Vui lòng thử lại hoặc đăng ký bằng Email/Mật khẩu.");
+                }}
                 theme="outline"
                 size="large"
                 width="100%"
                 text="signup_with"
                 shape="rectangular"
                 locale="vi"
+                useOneTap={false}
               />
             </div>
 
