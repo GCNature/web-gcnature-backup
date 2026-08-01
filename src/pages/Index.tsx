@@ -141,26 +141,22 @@ const Index = () => {
       <Footer />
       <FloatingContact />
       <LivestreamBanner />
-          {showPopup && popupSettings && (
+      {showPopup && popupSettings && (
         <div 
-          className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-300"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200 transform-gpu bg-black/65"
           style={{
-            backgroundColor: `rgba(0, 0, 0, ${(popupSettings.popupOpacity !== undefined ? Number(popupSettings.popupOpacity) : 60) / 100})`,
-            willChange: "opacity, backdrop-filter",
-            transform: "translate3d(0, 0, 0)"
+            backgroundColor: `rgba(0, 0, 0, ${(popupSettings.popupOpacity !== undefined ? Number(popupSettings.popupOpacity) : 65) / 100})`,
           }}
         >
           <div 
-            className="relative w-full overflow-visible animate-in zoom-in-95 duration-300"
+            className="relative w-full overflow-visible animate-in zoom-in-95 duration-200 transform-gpu"
             style={{
               maxWidth: `${popupSettings.popupWidth !== undefined ? Number(popupSettings.popupWidth) : 500}px`,
-              willChange: "transform, opacity",
-              transform: "translate3d(0, 0, 0)"
             }}
           >
             <button 
               onClick={() => setShowPopup(false)}
-              className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition-all hover:scale-110 active:scale-95 z-50 font-bold border-2 border-white"
+              className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-lg transition-all hover:scale-105 active:scale-95 z-50 font-bold border-2 border-white"
               aria-label="Close popup"
             >
               ✕
@@ -172,13 +168,13 @@ const Index = () => {
               className="block cursor-pointer overflow-hidden rounded-3xl"
             >
               <img 
-                src={popupSettings.introTitle && (popupSettings.introTitle.startsWith('http') || popupSettings.introTitle.startsWith('/')) ? `${popupSettings.introTitle}?t=${Date.now()}` : "/popup_design.png"} 
+                src={popupSettings.introTitle && (popupSettings.introTitle.startsWith('http') || popupSettings.introTitle.startsWith('/')) ? popupSettings.introTitle : "/popup_design.png"} 
                 alt="Chương trình Hot"
                 onError={(e: any) => {
                   e.target.onerror = null;
                   e.target.src = "/popup_design.png";
                 }}
-                className="w-full h-auto object-contain hover:brightness-105 transition-all duration-300 drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)]"
+                className="w-full h-auto object-contain hover:brightness-105 transition-transform duration-200"
               />
             </a>
           </div>
