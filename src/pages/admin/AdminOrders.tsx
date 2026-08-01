@@ -258,6 +258,12 @@ export default function AdminOrders() {
                       <span className="text-muted-foreground flex items-center gap-1 whitespace-nowrap"><MapPin className="w-3.5 h-3.5"/> Địa chỉ:</span>
                       <span className="font-medium text-foreground text-right">{detailOrder.shippingAddress}</span>
                     </div>
+                    {detailOrder.notes && (
+                      <div className="flex justify-between items-start gap-4">
+                        <span className="text-muted-foreground flex items-center gap-1 whitespace-nowrap"><FileText className="w-3.5 h-3.5"/> Ghi chú:</span>
+                        <span className="font-medium text-foreground text-right italic">{detailOrder.notes}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between border-t border-border pt-2 mt-2">
                       <span className="text-muted-foreground">IP Address:</span>
                       <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded text-foreground">
