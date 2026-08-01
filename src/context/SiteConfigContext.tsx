@@ -139,6 +139,13 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   useEffect(() => {
     fetchConfig();
+    const handleSync = () => fetchConfig();
+    window.addEventListener("site-config-updated", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      window.removeEventListener("site-config-updated", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
   }, []);
 
   const updateConfig = async (newConfig: SiteConfig): Promise<boolean> => {
@@ -146,7 +153,8 @@ export const SiteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       const res = await apiPut('/admin/settings/site-config', newConfig);
       if (res.success) {
         setConfig(newConfig);
-        toast.success("Đã lưu và cập nhật giao diện thành công!");
+        window.dispatchEvent(new Event("site-config-updated"));
+        toast.success("Đã lưu và cập nhật giao diện ngay lập tức!");
         return true;
       } else {
         toast.error("Lưu cấu hình thất bại: " + (res.message || 'Lỗi không xác định'));

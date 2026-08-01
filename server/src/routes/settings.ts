@@ -369,6 +369,57 @@ router.put('/site-config', async (req, res) => {
   }
 });
 
+// ── Public endpoint: anyone can read active bank payment method ──
+router.get('/active-payment-method', async (_req, res) => {
+  try {
+    const active = await prisma.payment_methods.findFirst({
+      where: { is_active: true },
+      orderBy: { updated_at: 'desc' }
+    });
+    if (active) {
+      return res.json({
+        success: true,
+        bankCode: active.bank_code,
+        bankName: active.bank_name || active.bank_code,
+        accountNumber: active.account_number,
+        accountName: active.account_name,
+      });
+    }
+
+    // Fallback to latest payment method if none marked active
+    const latest = await prisma.payment_methods.findFirst({
+      orderBy: { created_at: 'desc' }
+    });
+    if (latest) {
+      return res.json({
+        success: true,
+        bankCode: latest.bank_code,
+        bankName: latest.bank_name || latest.bank_code,
+        accountNumber: latest.account_number,
+        accountName: latest.account_name,
+      });
+    }
+
+    // Fallback default
+    res.json({
+      success: true,
+      bankCode: 'ACB',
+      bankName: 'Ngân hàng Á Châu',
+      accountNumber: '20952888',
+      accountName: 'HOANG THI KIM CHI',
+    });
+  } catch (error) {
+    console.error('Get active payment method error:', error);
+    res.json({
+      success: true,
+      bankCode: 'ACB',
+      bankName: 'Ngân hàng Á Châu',
+      accountNumber: '20952888',
+      accountName: 'HOANG THI KIM CHI',
+    });
+  }
+});
+
 // GET all settings
 router.get('/', async (req, res) => {
   try {
@@ -384,8 +435,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// PUT update settings (batch)
-router.put('/', async (req, res) => {
+// PUT update settings (batch) — protected by isStaff middleware
+router.put('/', isStaff, async (req, res) => {
   try {
     const updates = req.body; // { key1: value1, key2: value2, ... }
     const role = (req.user as any)?.role;
@@ -403,7 +454,7 @@ router.put('/', async (req, res) => {
           return res.status(403).json({ message: `Quản lý cửa hàng không có quyền thay đổi cấu hình key "${key}"` });
         }
       } else if (role !== 'admin') {
-        return res.status(403).json({ message: 'Forbidden' });
+        return res.status(403).json({ message: 'Bạn không có quyền thực hiện thao tác này' });
       }
     }
     
@@ -415,7 +466,7 @@ router.put('/', async (req, res) => {
       });
     }
 
-    res.json({ message: 'Đã lưu cấu hình' });
+    res.json({ message: 'Đã lưu cấu hình thành công' });
   } catch (error) {
     console.error('Update settings error:', error);
     res.status(500).json({ message: 'Lỗi server' });
@@ -435,8 +486,8 @@ router.get('/:key', async (req, res) => {
   }
 });
 
-// DELETE setting by key
-router.delete('/:key', async (req, res) => {
+// DELETE setting by key — protected by isStaff middleware
+router.delete('/:key', isStaff, async (req, res) => {
   try {
     const key = req.params.key;
     const role = (req.user as any)?.role;

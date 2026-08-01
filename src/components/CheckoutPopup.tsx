@@ -263,18 +263,51 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
     }, 800);
   };
 
+  // Active Bank Account from Database (Admin -> Thanh toán)
+  const [bankConfig, setBankConfig] = useState({
+    bankCode: BANK_CODE,
+    bankName: "Ngân hàng Á Châu",
+    accountNumber: BANK_ACCOUNT,
+    accountName: BANK_ACCOUNT_NAME,
+  });
+
+  useEffect(() => {
+    apiGet<any>('/settings/active-payment-method')
+      .then(data => {
+        if (data && data.success && data.accountNumber) {
+          setBankConfig({
+            bankCode: data.bankCode || BANK_CODE,
+            bankName: data.bankName || data.bankCode || "Ngân hàng Á Châu",
+            accountNumber: data.accountNumber,
+            accountName: data.accountName,
+          });
+        }
+      })
+      .catch(err => {
+        console.error("Failed to load active bank payment method:", err);
+      });
+  }, []);
+
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text).catch(() => { });
     setCopied(field);
     setTimeout(() => setCopied(null), 2000);
   };
 
-  // Bank info
-  const bankAccount = BANK_ACCOUNT;
-  const bankName = BANK_CODE;
-  const accountName = BANK_ACCOUNT_NAME;
+  // Bank info & QR generation
+  const bankAccount = bankConfig.accountNumber;
+  const bankName = bankConfig.bankName || bankConfig.bankCode;
+  const accountName = bankConfig.accountName;
   const transferContent = transferContentStr;
-  const qrUrl = makeVietQrUrl(transferAmount, transferContent);
+
+  const qrUrl = useMemo(() => {
+    const params = new URLSearchParams({
+      amount: String(transferAmount),
+      addInfo: transferContent,
+      accountName: accountName,
+    });
+    return `https://img.vietqr.io/image/${bankConfig.bankCode}-${bankAccount}-compact2.png?${params.toString()}`;
+  }, [transferAmount, transferContent, bankConfig.bankCode, bankAccount, accountName]);
 
   const stepLabels = [
     { num: 1, label: "Thanh toán" },

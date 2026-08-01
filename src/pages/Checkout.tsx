@@ -37,14 +37,38 @@ const Checkout = () => {
   const voucherDiscount = appliedVoucher ? Math.min(appliedVoucher.discount_amount, cartTotal) : 0;
   const totalWithShipping = cartTotal + shippingFee - voucherDiscount;
 
-  // Bank Info
-  const BANK_ACCOUNT_NUMBER = BANK_ACCOUNT;
-  const BANK_NAME = BANK_CODE;
-  const ACCOUNT_NAME = BANK_ACCOUNT_NAME;
+  // Bank Info loaded from active payment method in Database
+  const [bankConfig, setBankConfig] = useState({
+    bankCode: BANK_CODE,
+    bankName: "Ngân hàng Á Châu",
+    accountNumber: BANK_ACCOUNT,
+    accountName: BANK_ACCOUNT_NAME,
+  });
+
+  useEffect(() => {
+    apiGet<any>('/settings/active-payment-method')
+      .then(data => {
+        if (data && data.success && data.accountNumber) {
+          setBankConfig({
+            bankCode: data.bankCode || BANK_CODE,
+            bankName: data.bankName || data.bankCode || "Ngân hàng Á Châu",
+            accountNumber: data.accountNumber,
+            accountName: data.accountName,
+          });
+        }
+      })
+      .catch(err => {
+        console.error("Failed to load active bank payment method:", err);
+      });
+  }, []);
+
+  const BANK_ACCOUNT_NUMBER = bankConfig.accountNumber;
+  const BANK_NAME = bankConfig.bankName || bankConfig.bankCode;
+  const ACCOUNT_NAME = bankConfig.accountName;
   const description = `ThanhToan${orderId}`;
 
-  // Generate VietQR image
-  const qrUrl = makeVietQrUrl(totalWithShipping, description);
+  // Generate VietQR image dynamically
+  const qrUrl = `https://img.vietqr.io/image/${bankConfig.bankCode}-${BANK_ACCOUNT_NUMBER}-compact2.png?amount=${totalWithShipping}&addInfo=${description}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
 
   useEffect(() => {
     if (cart.length === 0 && !isSuccess) {
