@@ -564,16 +564,13 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
                               <h4 className="text-sm font-bold text-gray-900">Thanh toán khi nhận hàng (COD)</h4>
                             </div>
                             <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                              Khách hàng thanh toán tiền mặt 100% khi nhận hàng. <span className="font-bold text-blue-700">Không cần thanh toán trước.</span>
+                              Khách hàng thanh toán tiền mặt khi nhận hàng. <span className="font-bold text-blue-700">Không cần thanh toán trước.</span>
                             </p>
                             <div className="mt-2.5 bg-white rounded-xl p-3 border border-gray-200 space-y-1">
                               <div className="flex items-center justify-between text-xs">
                                 <span className="text-gray-500">Tổng thanh toán COD</span>
                                 <span className="font-extrabold text-blue-600 text-base">{formatPrice(finalTotal)}</span>
                               </div>
-                              <p className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1 mt-1">
-                                <Truck className="w-3.5 h-3.5" /> Kiểm tra hàng thoải mái trước khi thanh toán
-                              </p>
                             </div>
                           </div>
                         </div>
@@ -604,16 +601,18 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
                               <h4 className="text-sm font-bold text-gray-900">Chuyển khoản ngân hàng</h4>
                             </div>
                             <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-                              Chuyển khoản <span className="font-bold text-blue-600">100%</span> qua mã VietQR quét tự động.
+                              Chuyển khoản qua mã QR quét tự động.
                             </p>
                             <div className="mt-2.5 bg-white rounded-xl p-3 border border-gray-200 space-y-1">
                               <div className="flex items-center justify-between text-xs">
                                 <span className="text-gray-500">Số tiền chuyển khoản</span>
                                 <span className="font-extrabold text-blue-600 text-base">{formatPrice(finalTotal)}</span>
                               </div>
-                              <p className="text-[11px] text-blue-600 font-semibold flex items-center gap-1 mt-1">
-                                <Sparkles className="w-3.5 h-3.5" /> Quét mã QR tự động điền STK & số tiền
-                              </p>
+                              <div className="pt-1">
+                                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
+                                  <Truck className="w-3.5 h-3.5 text-green-600" /> FREE SHIP (Miễn phí vận chuyển)
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -659,11 +658,17 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
                         </div>
                       )}
 
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between items-center text-sm">
                         <span className="text-gray-500">Phí vận chuyển</span>
-                        <span className={`font-semibold ${selectedPayment === "full" ? "text-green-600" : "text-gray-700"}`}>
-                          {selectedPayment === "full" ? "Miễn phí toàn quốc (FREESHIP)" : "Theo khu vực"}
-                        </span>
+                        {selectedPayment === "full" ? (
+                          <span className="text-xs font-bold text-green-700 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full shadow-xs">
+                            Miễn phí (FREESHIP)
+                          </span>
+                        ) : (
+                          <span className="font-semibold text-gray-700 text-xs">
+                            Theo khu vực
+                          </span>
+                        )}
                       </div>
 
                       <div className="border-t border-gray-200 pt-3 mt-1">
