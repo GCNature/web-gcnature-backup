@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState, useEffect, useRef } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, Image as ImageIcon, Check, Loader2, Search, HardDrive, RefreshCw } from "lucide-react";
-import { apiGet } from "@/lib/api";
+import { Label } from "@/components/ui/label";
+import { Upload, FolderOpen, Search, Loader2, Link2, Camera, Sparkles } from "lucide-react";
+import { API_BASE, apiGet } from "@/lib/api";
 import { toast } from "sonner";
 
 interface MediaPickerModalProps {
@@ -13,251 +14,386 @@ interface MediaPickerModalProps {
 }
 
 export function MediaPickerModal({ open, onClose, onSelectImage }: MediaPickerModalProps) {
-  const [images, setImages] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [selectedUrl, setSelectedUrl] = useState("");
-  const [activeTab, setActiveTab] = useState<"upload" | "library">("upload");
+  const [activeUploadMode, setActiveUploadMode] = useState<"library" | "upload">("upload");
+  const [subUploadTab, setSubUploadTab] = useState<"computer" | "url" | "camera">("computer");
+  
+  // Library state
+  const [mediaFiles, setMediaFiles] = useState<any[]>([]);
+  const [mediaGroups, setMediaGroups] = useState<string[]>([]);
+  const [mediaLoading, setMediaLoading] = useState(false);
+  const [mediaSearch, setMediaSearch] = useState("");
+  const [mediaFilter, setMediaFilter] = useState("all");
 
-  const fetchMedia = async () => {
-    setLoading(true);
+  // URL state
+  const [pastedUrl, setPastedUrl] = useState("");
+  const [downloadingUrl, setDownloadingUrl] = useState(false);
+
+  // Camera state
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const loadMedia = async () => {
+    setMediaLoading(true);
     try {
-      const res = await apiGet<any>(`/media/list?_t=${Date.now()}`);
-      if (res && Array.isArray(res.files)) {
-        const fileUrls = res.files.map((f: any) => {
-          if (typeof f === 'string') return f;
-          return f.url || (f.filename ? `/products/${f.filename}` : '');
-        }).filter(Boolean);
-        setImages(fileUrls);
-      } else if (Array.isArray(res)) {
-        const fileUrls = res.map((f: any) => {
-          if (typeof f === 'string') return f;
-          return f.url || (f.filename ? `/products/${f.filename}` : '');
-        }).filter(Boolean);
-        setImages(fileUrls);
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE}/media/list?_t=${Date.now()}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMediaFiles(data.files || []);
+        setMediaGroups(data.groups || []);
       }
-    } catch (err: any) {
-      console.error('Failed to load media gallery:', err);
-      toast.error("Lỗi kết nối kho ảnh: " + (err.message || 'Lỗi server'));
+    } catch (err) {
+      console.error("Failed to load media gallery:", err);
     } finally {
-      setLoading(false);
+      setMediaLoading(false);
     }
   };
 
   useEffect(() => {
     if (open) {
-      fetchMedia();
-      setSelectedUrl("");
+      loadMedia();
+      setPastedUrl("");
+    } else {
+      stopCamera();
     }
   }, [open]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('images', file);
-    formData.append('file', file);
-    formData.append('image', file);
-
-    setUploading(true);
+  const handleUploadFiles = async (files: File[]) => {
+    if (!files || files.length === 0) return;
+    setMediaLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      const formData = new FormData();
+      files.forEach((f) => formData.append("images", f));
 
-      const res = await fetch('/api/media/upload', {
-        method: 'POST',
+      const token = localStorage.getItem("token");
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const response = await fetch(`${API_BASE}/media/upload`, {
+        method: "POST",
         headers,
-        body: formData
+        body: formData,
       });
 
-      const responseText = await res.text();
-      let data: any = {};
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseErr) {
-        console.error('[MediaUpload] Non-JSON response:', responseText);
-        throw new Error(`Máy chủ trả về phản hồi HTML (${res.status}). Vui lòng kiểm tra dung lượng file.`);
-      }
+      if (!response.ok) throw new Error("Upload failed");
+      const resData = await response.json();
 
-      if (res.ok && (data.success || data.url || data.fileUrl || data.files)) {
-        const uploadedUrl = data.url || data.fileUrl || data.files?.[0]?.url;
-        if (uploadedUrl) {
-          toast.success("Đã tải ảnh từ máy tính lên thành công!");
-          fetchMedia(); // Refresh media gallery
-          onSelectImage(uploadedUrl);
-          onClose();
-        } else {
-          toast.error("Tải ảnh thất bại: Không nhận được đường dẫn tệp");
-        }
+      toast.success(resData.message || "Tải ảnh lên thành công");
+      await loadMedia();
+
+      if (resData.files && resData.files.length > 0) {
+        onSelectImage(resData.files[0].url);
+        onClose();
+      } else if (resData.url || resData.fileUrl) {
+        onSelectImage(resData.url || resData.fileUrl);
+        onClose();
       } else {
-        toast.error("Tải ảnh thất bại: " + (data.message || `Lỗi server (HTTP ${res.status})`));
+        setActiveUploadMode("library");
       }
     } catch (err: any) {
-      toast.error("Lỗi khi tải ảnh: " + (err.message || 'Lỗi kết nối'));
+      toast.error("Lỗi khi tải ảnh lên. Vui lòng kiểm tra dung lượng.");
     } finally {
-      setUploading(false);
+      setMediaLoading(false);
     }
   };
 
-  const filteredImages = images.filter((img) => 
-    img.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleDownloadUrl = async () => {
+    if (!pastedUrl.trim()) return;
+    setDownloadingUrl(true);
+    try {
+      const token = localStorage.getItem("token");
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const response = await fetch(`${API_BASE}/media/upload-url`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ url: pastedUrl.trim() }),
+      });
+
+      if (!response.ok) throw new Error("Failed to download from URL");
+      const resData = await response.json();
+
+      toast.success(resData.message || "Đã lưu ảnh thành công");
+      setPastedUrl("");
+      await loadMedia();
+
+      if (resData.file?.url) {
+        onSelectImage(resData.file.url);
+        onClose();
+      } else {
+        setActiveUploadMode("library");
+      }
+    } catch (err) {
+      toast.error("Không thể tải ảnh từ liên kết này");
+    } finally {
+      setDownloadingUrl(false);
+    }
+  };
+
+  const startCamera = async () => {
+    setCameraLoading(true);
+    try {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach((t) => t.stop());
+      }
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setCameraStream(stream);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (err) {
+      toast.error("Không thể truy cập camera. Vui lòng kiểm tra quyền thiết bị.");
+    } finally {
+      setCameraLoading(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((t) => t.stop());
+      setCameraStream(null);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        toast.error("Lỗi chụp ảnh");
+        return;
+      }
+      const file = new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" });
+      await handleUploadFiles([file]);
+      stopCamera();
+    }, "image/jpeg", 0.9);
+  };
+
+  const filteredMedia = mediaFiles.filter((f) => {
+    if (mediaFilter !== "all" && f.group !== mediaFilter) return false;
+    if (mediaSearch && !f.filename.toLowerCase().includes(mediaSearch.toLowerCase())) return false;
+    return true;
+  });
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(val) => { if (!val) { stopCamera(); onClose(); } }}>
       <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col bg-card">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl">
-            <ImageIcon className="w-5 h-5 text-primary" /> Kho Dữ Liệu Ảnh & Tải Ảnh Mới
+          <DialogTitle className="flex items-center gap-2">
+            <FolderOpen className="w-5 h-5 text-primary" /> Chọn media thay thế
           </DialogTitle>
-          <DialogDescription>
-            Tải ảnh trực tiếp từ máy tính hoặc chọn ảnh đã có trong Kho Dữ Liệu Media của hệ thống.
-          </DialogDescription>
         </DialogHeader>
 
-        {/* Tab Switchers */}
-        <div className="flex items-center justify-between border-b border-border pb-2">
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant={activeTab === "upload" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab("upload")}
-              className="gap-2"
-            >
-              <HardDrive className="w-4 h-4" /> Tải từ Máy Tính
-            </Button>
-            <Button
-              type="button"
-              variant={activeTab === "library" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setActiveTab("library")}
-              className="gap-2"
-            >
-              <ImageIcon className="w-4 h-4" /> Kho Dữ Liệu Web ({images.length})
-            </Button>
-          </div>
-          <Button
+        {/* Modes Navigation */}
+        <div className="flex border-b border-border mb-3">
+          <button
             type="button"
-            variant="ghost"
-            size="sm"
-            onClick={fetchMedia}
-            title="Làm mới kho ảnh"
-            className="text-xs text-muted-foreground gap-1"
+            onClick={() => { setActiveUploadMode("library"); stopCamera(); }}
+            className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all ${
+              activeUploadMode === "library" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Làm mới
-          </Button>
+            Chọn từ kho ảnh
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveUploadMode("upload")}
+            className={`px-4 py-2 text-xs font-semibold border-b-2 transition-all ${
+              activeUploadMode === "upload" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Tải ảnh mới (3 cách)
+          </button>
         </div>
 
-        {/* Tab Content: Upload */}
-        {activeTab === "upload" && (
-          <div className="p-8 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center my-4 bg-muted/20 hover:bg-muted/40 transition-colors">
-            <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
-              {uploading ? <Loader2 className="w-7 h-7 animate-spin" /> : <Upload className="w-7 h-7" />}
-            </div>
-            <h4 className="font-semibold text-base mb-1">Kéo thả hoặc Nhấp để Tải Ảnh từ Máy Tính</h4>
-            <p className="text-xs text-muted-foreground mb-4">Hỗ trợ các định dạng PNG, JPG, WEBP, SVG, GIF (Tối đa 100MB)</p>
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileUpload}
-                disabled={uploading}
-              />
-              <span className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold shadow hover:bg-primary/90 transition-colors">
-                {uploading ? "Đang tải ảnh lên..." : "Chọn Tệp Từ Máy Tính"}
-              </span>
-            </label>
-          </div>
-        )}
-
-        {/* Tab Content: Library */}
-        {activeTab === "library" && (
-          <div className="flex-1 flex flex-col min-h-[300px]">
-            <div className="relative mb-3">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Tìm tên ảnh trong kho dữ liệu..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
-              />
+        {/* ═══ Mode 1: Library ═══ */}
+        {activeUploadMode === "library" && (
+          <>
+            <div className="flex gap-2 mb-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input
+                  value={mediaSearch}
+                  onChange={(e) => setMediaSearch(e.target.value)}
+                  placeholder="Tìm tên ảnh..."
+                  className="pl-8 h-8 text-xs"
+                />
+              </div>
+              <select
+                value={mediaFilter}
+                onChange={(e) => setMediaFilter(e.target.value)}
+                className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+              >
+                <option value="all">Tất cả ({mediaFiles.length})</option>
+                {mediaGroups.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
             </div>
 
-            <div className="flex-1 overflow-y-auto max-h-[350px] p-2 border border-border rounded-xl">
-              {loading ? (
-                <div className="flex items-center justify-center h-48">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="flex-1 overflow-y-auto min-h-[300px] border border-border rounded-xl p-2">
+              {mediaLoading ? (
+                <div className="flex justify-center py-16">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
-              ) : filteredImages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
-                  <ImageIcon className="w-12 h-12 mb-2 opacity-40" />
-                  <p>Chưa có ảnh trong kho dữ liệu.</p>
+              ) : filteredMedia.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  <p className="text-sm">Không tìm thấy ảnh trong kho</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
-                  {filteredImages.map((url, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => setSelectedUrl(url)}
-                      className={`group relative aspect-square rounded-lg border-2 overflow-hidden cursor-pointer transition-all ${
-                        selectedUrl === url
-                          ? "border-primary ring-2 ring-primary/40 scale-[0.98]"
-                          : "border-border hover:border-primary/60"
-                      }`}
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                  {filteredMedia.map((f) => (
+                    <button
+                      key={f.filename}
+                      type="button"
+                      onClick={() => {
+                        onSelectImage(f.url);
+                        onClose();
+                      }}
+                      className="rounded-lg border border-border overflow-hidden hover:border-primary hover:shadow-md transition-all text-left group"
                     >
-                      <img
-                        src={url}
-                        alt="Media"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = 'none';
-                        }}
-                      />
-                      {selectedUrl === url && (
-                        <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                          <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                            <Check className="w-4 h-4" />
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                      <div className="aspect-square bg-muted overflow-hidden">
+                        <img src={f.url} alt={f.filename} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      </div>
+                      <div className="p-1.5 bg-card">
+                        <p className="text-[10px] font-medium truncate text-foreground">{f.filename}</p>
+                      </div>
+                    </button>
                   ))}
                 </div>
               )}
             </div>
+          </>
+        )}
+
+        {/* ═══ Mode 2: Upload (3 Ways) ═══ */}
+        {activeUploadMode === "upload" && (
+          <div className="flex-1 flex flex-col gap-4 overflow-y-auto min-h-[300px]">
+            {/* Sub Tabs */}
+            <div className="flex gap-2 p-1 bg-muted rounded-lg w-fit">
+              <button
+                type="button"
+                onClick={() => { setSubUploadTab("computer"); stopCamera(); }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  subUploadTab === "computer" ? "bg-background text-foreground shadow-sm font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Upload className="w-3.5 h-3.5 inline mr-1" />
+                Từ máy tính
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSubUploadTab("url"); stopCamera(); }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  subUploadTab === "url" ? "bg-background text-foreground shadow-sm font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Link2 className="w-3.5 h-3.5 inline mr-1" />
+                Dán link ảnh
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSubUploadTab("camera"); startCamera(); }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  subUploadTab === "camera" ? "bg-background text-foreground shadow-sm font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Camera className="w-3.5 h-3.5 inline mr-1" />
+                Chụp từ Camera
+              </button>
+            </div>
+
+            {/* Panel 1: Computer file click upload */}
+            {subUploadTab === "computer" && (
+              <div
+                className="flex-1 flex flex-col items-center justify-center gap-3 cursor-pointer min-h-[250px] border-2 border-dashed border-border rounded-xl p-6 bg-muted/10 hover:bg-muted/30 transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      handleUploadFiles(Array.from(e.target.files));
+                    }
+                  }}
+                />
+                {mediaLoading ? (
+                  <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                ) : (
+                  <Upload className="w-12 h-12 text-muted-foreground/60" />
+                )}
+                <div className="text-center">
+                  <p className="text-sm font-semibold">Nhấp để chọn tệp từ máy tính</p>
+                  <p className="text-xs text-muted-foreground mt-1">Hỗ trợ các định dạng JPG, PNG, WEBP, GIF (Tối đa 100MB)</p>
+                </div>
+              </div>
+            )}
+
+            {/* Panel 2: Paste URL */}
+            {subUploadTab === "url" && (
+              <div className="max-w-md mx-auto w-full space-y-4 py-8">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Địa chỉ liên kết hình ảnh (URL)</Label>
+                  <Input
+                    value={pastedUrl}
+                    onChange={(e) => setPastedUrl(e.target.value)}
+                    placeholder="https://example.com/image.jpg"
+                    className="text-sm"
+                  />
+                </div>
+                <Button
+                  onClick={handleDownloadUrl}
+                  disabled={downloadingUrl || !pastedUrl.trim()}
+                  className="w-full bg-primary text-white gap-2"
+                >
+                  {downloadingUrl ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+                  Tải về & Lưu vào kho ảnh
+                </Button>
+              </div>
+            )}
+
+            {/* Panel 3: Camera */}
+            {subUploadTab === "camera" && (
+              <div className="flex flex-col items-center justify-center gap-3 py-4">
+                {cameraLoading ? (
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                ) : (
+                  <div className="relative w-full max-w-md aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center">
+                    <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <Button onClick={capturePhoto} className="gap-2 bg-primary text-white">
+                  <Camera className="w-4 h-4" /> Chụp & Chọn Ảnh
+                </Button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Footer Actions */}
-        <div className="flex justify-between items-center pt-3 border-t border-border mt-auto">
-          <p className="text-xs text-muted-foreground truncate max-w-[350px]">
-            {selectedUrl ? `Đã chọn: ${selectedUrl}` : "Hãy chọn 1 ảnh hoặc tải từ máy tính..."}
-          </p>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Hủy
-            </Button>
-            <Button
-              disabled={!selectedUrl}
-              onClick={() => {
-                if (selectedUrl) {
-                  onSelectImage(selectedUrl);
-                  onClose();
-                }
-              }}
-              className="bg-primary text-primary-foreground font-semibold"
-            >
-              Xác Nhận Chọn Ảnh
-            </Button>
-          </div>
-        </div>
+        <DialogFooter className="pt-2 border-t border-border">
+          <Button variant="outline" onClick={() => { stopCamera(); onClose(); }}>
+            Hủy
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
