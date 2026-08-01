@@ -61,7 +61,7 @@ const otherItems = [
   { title: "Header & Footer", url: "/admin/header-footer", icon: Sliders },
   { title: "Lịch sử nạp tiền", url: "/admin/bank-history", icon: History },
   { title: "Giao dịch nhận tiền", url: "/admin/transactions", icon: Wallet },
-  { title: "Thanh toán", url: "/admin/payments", icon: CreditCard },
+  { title: "Thanh toán", url: "/admin/settings?tab=payment", icon: CreditCard },
   { title: "Danh mục", url: "/admin/categories", icon: Layers },
   { title: "Kho ảnh", url: "/admin/media", icon: FolderOpen },
   { title: "Banner", url: "/admin/banners", icon: Image },

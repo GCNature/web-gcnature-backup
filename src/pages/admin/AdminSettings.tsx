@@ -7,11 +7,12 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Mail, CreditCard, Globe, Phone, MapPin, Save, AlertCircle, Radio, FileText } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { apiGet, apiPut } from "@/lib/api";
+import { useSearchParams } from "react-router-dom";
+import { PaymentManagementSection } from "@/components/admin/PaymentManagementSection";
 
 export default function AdminSettings() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "site";
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   
@@ -195,7 +196,7 @@ export default function AdminSettings() {
   return (
     <AdminLayout title="Cài đặt">
       <div className="max-w-5xl">
-        <Tabs defaultValue="site" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="space-y-6">
           <TabsList className="grid w-full grid-cols-6 lg:w-auto">
             <TabsTrigger value="site" className="gap-2">
               <Globe className="w-4 h-4" />
@@ -386,88 +387,9 @@ export default function AdminSettings() {
             </Card>
           </TabsContent>
 
-          {/* Payment Settings */}
+          {/* Payment Settings - Unified */}
           <TabsContent value="payment" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5" />
-                  Cấu hình thanh toán
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4 mb-6">
-                  <h3 className="font-semibold">Phương thức thanh toán</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Thanh toán khi nhận hàng (COD)</p>
-                        <p className="text-xs text-muted-foreground">Khách thanh toán khi nhận hàng</p>
-                      </div>
-                      <Switch 
-                        checked={paymentSettings.enableCOD}
-                        onCheckedChange={(checked) => setPaymentSettings({...paymentSettings, enableCOD: checked})}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Chuyển khoản ngân hàng</p>
-                        <p className="text-xs text-muted-foreground">Chuyển khoản qua VietQR</p>
-                      </div>
-                      <Switch 
-                        checked={paymentSettings.enableBankTransfer}
-                        onCheckedChange={(checked) => setPaymentSettings({...paymentSettings, enableBankTransfer: checked})}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Ví điện tử</p>
-                        <p className="text-xs text-muted-foreground">Momo, ZaloPay, VNPay</p>
-                      </div>
-                      <Switch 
-                        checked={paymentSettings.enableEWallet}
-                        onCheckedChange={(checked) => setPaymentSettings({...paymentSettings, enableEWallet: checked})}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4">
-                  <h3 className="font-semibold mb-4">Thông tin ngân hàng</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Mã ngân hàng</Label>
-                      <Input 
-                        value={paymentSettings.bankCode}
-                        onChange={(e) => setPaymentSettings({...paymentSettings, bankCode: e.target.value})}
-                        placeholder="ACB"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Số tài khoản</Label>
-                      <Input 
-                        value={paymentSettings.bankAccount}
-                        onChange={(e) => setPaymentSettings({...paymentSettings, bankAccount: e.target.value})}
-                        placeholder="24488671"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2 mt-4">
-                    <Label>Tên chủ tài khoản</Label>
-                    <Input 
-                      value={paymentSettings.bankAccountName}
-                      onChange={(e) => setPaymentSettings({...paymentSettings, bankAccountName: e.target.value})}
-                      placeholder="NGUYEN VAN A"
-                    />
-                  </div>
-                </div>
-
-                <Button onClick={() => handleSave("thanh toán")} disabled={saving} className="gap-2">
-                  <Save className="w-4 h-4" />
-                  Lưu cấu hình thanh toán
-                </Button>
-              </CardContent>
-            </Card>
+            <PaymentManagementSection />
           </TabsContent>
 
           {/* Social Media */}
