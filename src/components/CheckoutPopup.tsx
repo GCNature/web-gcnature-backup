@@ -562,9 +562,6 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="text-sm font-bold text-gray-900">Thanh toán khi nhận hàng (COD)</h4>
-                              <span className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full">
-                                MẶC ĐỊNH & AN TOÀN
-                              </span>
                             </div>
                             <p className="text-xs text-gray-600 mt-1 leading-relaxed">
                               Khách hàng thanh toán tiền mặt 100% khi nhận hàng. <span className="font-bold text-blue-700">Không cần thanh toán trước.</span>
@@ -583,7 +580,7 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
                       </div>
                     </button>
 
-                    {/* Option 2: VietQR Bank Transfer */}
+                    {/* Option 2: Bank Transfer */}
                     <button
                       type="button"
                       onClick={() => setSelectedPayment("full")}
@@ -604,10 +601,7 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="text-sm font-bold text-gray-900">Chuyển khoản ngân hàng (VietQR)</h4>
-                              <span className="text-[10px] font-bold bg-green-600 text-white px-2 py-0.5 rounded-full flex items-center gap-0.5">
-                                <QrCode className="w-2.5 h-2.5" /> XỬ LÝ NHANH
-                              </span>
+                              <h4 className="text-sm font-bold text-gray-900">Chuyển khoản ngân hàng</h4>
                             </div>
                             <p className="text-xs text-gray-600 mt-1 leading-relaxed">
                               Chuyển khoản <span className="font-bold text-blue-600">100%</span> qua mã VietQR quét tự động.
@@ -667,7 +661,9 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
 
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-500">Phí vận chuyển</span>
-                        <span className="font-semibold text-green-600">Miễn phí toàn quốc</span>
+                        <span className={`font-semibold ${selectedPayment === "full" ? "text-green-600" : "text-gray-700"}`}>
+                          {selectedPayment === "full" ? "Miễn phí toàn quốc (FREESHIP)" : "Theo khu vực"}
+                        </span>
                       </div>
 
                       <div className="border-t border-gray-200 pt-3 mt-1">
@@ -734,7 +730,7 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
                         ? "Đang tạo đơn hàng..."
                         : selectedPayment === "cod"
                           ? `XÁC NHẬN ĐẶT HÀNG COD (${formatPrice(finalTotal)})`
-                          : `CHUYỂN KHOẢN VIETQR (${formatPrice(finalTotal)})`
+                          : `CHUYỂN KHOẢN NGÂN HÀNG (${formatPrice(finalTotal)})`
                       }
                     </button>
                   </div>
@@ -880,7 +876,7 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
                     <div className="flex justify-between border-t border-gray-100 pt-2">
                       <span className="text-gray-500">Hình thức thanh toán:</span>
                       <span className="font-bold text-blue-700">
-                        {selectedPayment === "cod" ? "Thanh toán khi nhận hàng (COD)" : "Chuyển khoản ngân hàng (VietQR)"}
+                        {selectedPayment === "cod" ? "Thanh toán khi nhận hàng (COD)" : "Chuyển khoản ngân hàng"}
                       </span>
                     </div>
                     <div className="flex justify-between">
