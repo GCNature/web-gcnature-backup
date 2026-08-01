@@ -10,8 +10,8 @@ export const GOOGLE_CLIENT_ID =
   "671275324232-jedlb9gmfkj2n44dbcc5rgvcvlb1s936.apps.googleusercontent.com";
 
 export const BANK_CODE = env.VITE_BANK_CODE || "ACB";
-export const BANK_ACCOUNT = env.VITE_BANK_ACCOUNT || "24488671";
-export const BANK_ACCOUNT_NAME = env.VITE_BANK_ACCOUNT_NAME || "MAI XUAN ANH";
+export const BANK_ACCOUNT = env.VITE_BANK_ACCOUNT || "20952888";
+export const BANK_ACCOUNT_NAME = env.VITE_BANK_ACCOUNT_NAME || "HOANG THI KIM CHI";
 export const VIETQR_TEMPLATE = env.VITE_VIETQR_TEMPLATE || "compact2";
 export const VIETQR_BASE_URL = trimTrailingSlash(env.VITE_VIETQR_BASE_URL || "https://img.vietqr.io/image");
 

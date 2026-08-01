@@ -51,6 +51,7 @@ export default function AdminPayments() {
     try {
       await apiPut(`/admin/payments/${id}/toggle`);
       await loadPayments();
+      window.dispatchEvent(new Event("payment-methods-updated"));
       toast.success("Đã cập nhật trạng thái");
     } catch (err: any) {
       toast.error(err.message);
@@ -73,6 +74,7 @@ export default function AdminPayments() {
       });
       await loadPayments();
       setEditingId(null);
+      window.dispatchEvent(new Event("payment-methods-updated"));
       toast.success("Đã lưu thay đổi");
     } catch (err: any) {
       toast.error(err.message);
@@ -84,6 +86,7 @@ export default function AdminPayments() {
     try {
       await apiDelete(`/admin/payments/${id}`);
       await loadPayments();
+      window.dispatchEvent(new Event("payment-methods-updated"));
       toast.success("Đã xóa");
     } catch (err: any) {
       toast.error(err.message);
@@ -100,6 +103,7 @@ export default function AdminPayments() {
       await loadPayments();
       setNewForm({ bankCode: "", bankName: "", accountNumber: "", accountName: "" });
       setShowAdd(false);
+      window.dispatchEvent(new Event("payment-methods-updated"));
       toast.success("Đã thêm phương thức thanh toán");
     } catch (err: any) {
       toast.error(err.message);

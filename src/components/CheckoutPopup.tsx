@@ -272,20 +272,30 @@ const CheckoutPopup = ({ total, onClose }: CheckoutPopupProps) => {
   });
 
   useEffect(() => {
-    apiGet<any>('/settings/active-payment-method')
-      .then(data => {
-        if (data && data.success && data.accountNumber) {
-          setBankConfig({
-            bankCode: data.bankCode || BANK_CODE,
-            bankName: data.bankName || data.bankCode || "Ngân hàng Á Châu",
-            accountNumber: data.accountNumber,
-            accountName: data.accountName,
-          });
-        }
-      })
-      .catch(err => {
-        console.error("Failed to load active bank payment method:", err);
-      });
+    const fetchActiveBank = () => {
+      apiGet<any>(`/settings/active-payment-method?_t=${Date.now()}`)
+        .then(data => {
+          if (data && data.success && data.accountNumber) {
+            setBankConfig({
+              bankCode: data.bankCode || BANK_CODE,
+              bankName: data.bankName || data.bankCode || "Ngân hàng Á Châu",
+              accountNumber: data.accountNumber,
+              accountName: data.accountName,
+            });
+          }
+        })
+        .catch(err => {
+          console.error("Failed to load active bank payment method:", err);
+        });
+    };
+
+    fetchActiveBank();
+    window.addEventListener("payment-methods-updated", fetchActiveBank);
+    window.addEventListener("storage", fetchActiveBank);
+    return () => {
+      window.removeEventListener("payment-methods-updated", fetchActiveBank);
+      window.removeEventListener("storage", fetchActiveBank);
+    };
   }, []);
 
   const handleCopy = (text: string, field: string) => {
